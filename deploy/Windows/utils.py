@@ -70,13 +70,12 @@ def poor_yaml_read(file):
     data = {}
     regex = re.compile(r'^(.*?):(.*?)$')
     with open(file, 'r', encoding='utf-8') as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip('\n\r\t ').replace('\\', '/')
             if line.startswith('#'):
                 continue
-            result = re.match(regex, line)
-            if result:
-                k, v = result.group(1), result.group(2).strip('\n\r\t\' ')
+            if result := re.match(regex, line):
+                k, v = result[1], result[2].strip('\n\r\t\' ')
                 if v:
                     if v.lower() == 'null':
                         v = None
@@ -121,8 +120,7 @@ class DataProcessInfo:
 
     @cached_property
     def name(self):
-        name = self.proc.name()
-        return name
+        return self.proc.name()
 
     @cached_property
     def cmdline(self):

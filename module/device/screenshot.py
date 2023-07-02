@@ -117,7 +117,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
 
         if now - self._last_save_time.get(genre, 0) > interval:
             fmt = 'png'
-            file = '%s.%s' % (int(now * 1000), fmt)
+            file = f'{int(now * 1000)}.{fmt}'
 
             folder = self.config.SCREEN_SHOT_SAVE_FOLDER_BASE if to_base_folder else self.config.SCREEN_SHOT_SAVE_FOLDER
             folder = os.path.join(folder, genre)
@@ -154,10 +154,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
             if interval != origin:
                 logger.warning(f'Optimization.CombatScreenshotInterval {origin} is revised to {interval}')
                 self.config.Optimization_CombatScreenshotInterval = interval
-        elif isinstance(interval, (int, float)):
-            # No limitation for manual set in code
-            pass
-        else:
+        elif not isinstance(interval, (int, float)):
             logger.warning(f'Unknown screenshot interval: {interval}')
             raise ScriptError(f'Unknown screenshot interval: {interval}')
         # Screenshot interval in scrcpy is meaningless,
@@ -201,11 +198,10 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
                 self.image = self._handle_orientated_image(self.image)
                 orientated = True
                 width, height = image_size(self.image)
-                if width == 720 and height == 1280:
-                    logger.info('Unable to handle orientated screenshot, continue for now')
-                    return True
-                else:
+                if width != 720 or height != 1280:
                     continue
+                logger.info('Unable to handle orientated screenshot, continue for now')
+                return True
             elif self.config.Emulator_Serial == 'wsa-0':
                 self.display_resize_wsa(0)
                 return False
@@ -232,13 +228,11 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
                 logger.info(f'Game running on display {display}')
                 logger.warning('Game not running on display 0, will be restarted')
                 self.app_stop_uiautomator2()
-                return False
             elif self.config.Emulator_ScreenshotMethod == 'uiautomator2':
                 logger.warning(f'Received pure black screenshots from emulator, color: {color}')
                 logger.warning('Uninstall minicap and retry')
                 self.uninstall_minicap()
                 self._screen_black_checked = False
-                return False
             else:
                 # logger.warning(f'Received pure black screenshots from emulator, color: {color}')
                 # logger.warning(f'Screenshot method `{self.config.Emulator_ScreenshotMethod}` '
@@ -249,7 +243,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy):
                     else:
                         logger.warning('If you are using MuMu X, please upgrade to version >= 12.1.5.0')
                 self._screen_black_checked = False
-                return False
+            return False
         else:
             self._screen_black_checked = True
             return True

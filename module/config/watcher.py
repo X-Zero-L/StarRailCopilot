@@ -17,8 +17,7 @@ class ConfigWatcher:
         Last modify time of the file
         """
         timestamp = os.stat(filepath_config(self.config_name)).st_mtime
-        mtime = datetime.fromtimestamp(timestamp).replace(microsecond=0)
-        return mtime
+        return datetime.fromtimestamp(timestamp).replace(microsecond=0)
 
     def should_reload(self) -> bool:
         """

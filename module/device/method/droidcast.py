@@ -207,9 +207,9 @@ class DroidCast(Uiautomator2):
             image = np.frombuffer(image, np.uint8)
             if image is not None:
                 image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-                if image is not None:
-                    raise DroidCastVersionIncompatible(
-                        'Requesting screenshots from `DroidCast_raw` but server is `DroidCast`')
+            if image is not None:
+                raise DroidCastVersionIncompatible(
+                    'Requesting screenshots from `DroidCast_raw` but server is `DroidCast`')
             # ValueError: cannot reshape array of size 0 into shape (720,1280)
             raise ImageTruncated(str(e))
 

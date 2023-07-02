@@ -173,7 +173,7 @@ class DraggableList:
             # Drag pages
             if row_index < self.cur_min:
                 self.drag_page(self.reverse_direction(self.drag_direction), main=main)
-            elif self.cur_max < row_index:
+            else:
                 self.drag_page(self.drag_direction, main=main)
 
             # Wait for bottoming out
@@ -185,10 +185,11 @@ class DraggableList:
 
     def is_row_selected(self, button: OcrResultButton, main: ModuleBase) -> bool:
         # Having gold letters
-        if main.image_color_count(button, color=self.active_color, threshold=221, count=50):
-            return True
-
-        return False
+        return bool(
+            main.image_color_count(
+                button, color=self.active_color, threshold=221, count=50
+            )
+        )
 
     def select_row(self, row: Keyword, main: ModuleBase, skip_first_screenshot=True):
         """
@@ -217,10 +218,9 @@ class DraggableList:
 
             if skip_first_load_rows:
                 skip_first_load_rows = False
-            else:
-                if load_rows_interval.reached():
-                    self.load_rows(main=main)
-                    load_rows_interval.reset()
+            elif load_rows_interval.reached():
+                self.load_rows(main=main)
+                load_rows_interval.reset()
 
             button = self.keyword2button(row)
             if not button:

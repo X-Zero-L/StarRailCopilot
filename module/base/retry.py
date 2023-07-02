@@ -64,11 +64,7 @@ def __retry_internal(f, exceptions=Exception, tries=-1, delay=0, max_delay=None,
             time.sleep(_delay)
             _delay *= backoff
 
-            if isinstance(jitter, tuple):
-                _delay += random.uniform(*jitter)
-            else:
-                _delay += jitter
-
+            _delay += random.uniform(*jitter) if isinstance(jitter, tuple) else jitter
             if max_delay is not None:
                 _delay = min(_delay, max_delay)
 
@@ -90,8 +86,8 @@ def retry(exceptions=Exception, tries=-1, delay=0, max_delay=None, backoff=1, ji
 
     @decorator
     def retry_decorator(f, *fargs, **fkwargs):
-        args = fargs if fargs else list()
-        kwargs = fkwargs if fkwargs else dict()
+        args = fargs if fargs else []
+        kwargs = fkwargs if fkwargs else {}
         return __retry_internal(partial(f, *args, **kwargs), exceptions, tries, delay, max_delay, backoff, jitter,
                                 logger)
 
@@ -118,6 +114,6 @@ def retry_call(f, fargs=None, fkwargs=None, exceptions=Exception, tries=-1, dela
                    default: retry.logging_logger. if None, logging is disabled.
     :returns: the result of the f function.
     """
-    args = fargs if fargs else list()
-    kwargs = fkwargs if fkwargs else dict()
+    args = fargs if fargs else []
+    kwargs = fkwargs if fkwargs else {}
     return __retry_internal(partial(f, *args, **kwargs), exceptions, tries, delay, max_delay, backoff, jitter, logger)

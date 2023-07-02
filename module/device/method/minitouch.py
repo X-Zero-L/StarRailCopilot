@@ -19,8 +19,7 @@ from module.logger import logger
 
 
 def random_normal_distribution(a, b, n=5):
-    output = np.mean(np.random.uniform(a, b, size=n))
-    return output
+    return np.mean(np.random.uniform(a, b, size=n))
 
 
 def random_theta():
@@ -80,15 +79,12 @@ def insert_swipe(p0, p3, speed=15, min_distance=10):
         points.append(point)
         prev = point
 
-    # Delete nearing points
-    if len(points[1:]):
-        distance = np.linalg.norm(np.subtract(points[1:], points[0]), axis=1)
-        mask = np.append(True, distance > min_distance)
-        points = np.array(points)[mask].tolist()
-    else:
-        points = [p0, p3]
+    if not len(points[1:]):
+        return [p0, p3]
 
-    return points
+    distance = np.linalg.norm(np.subtract(points[1:], points[0]), axis=1)
+    mask = np.append(True, distance > min_distance)
+    return np.array(points)[mask].tolist()
 
 
 class Command:
@@ -123,13 +119,9 @@ class Command:
         """
         String that write into minitouch socket
         """
-        if self.operation == 'c':
+        if self.operation in ['c', 'r']:
             return f'{self.operation}\n'
-        elif self.operation == 'r':
-            return f'{self.operation}\n'
-        elif self.operation == 'd':
-            return f'{self.operation} {self.contact} {self.x} {self.y} {self.pressure}\n'
-        elif self.operation == 'm':
+        elif self.operation in ['d', 'm']:
             return f'{self.operation} {self.contact} {self.x} {self.y} {self.pressure}\n'
         elif self.operation == 'u':
             return f'{self.operation} {self.contact}\n'
@@ -144,20 +136,16 @@ class Command:
         See https://github.com/openatx/atx-agent#minitouch%E6%93%8D%E4%BD%9C%E6%96%B9%E6%B3%95
         """
         x, y = self.x / max_x, self.y / max_y
-        if self.operation == 'c':
+        if self.operation in ['c', 'r']:
             out = dict(operation=self.operation)
-        elif self.operation == 'r':
-            out = dict(operation=self.operation)
-        elif self.operation == 'd':
-            out = dict(operation=self.operation, index=self.contact, pressure=self.pressure, xP=x, yP=y)
-        elif self.operation == 'm':
+        elif self.operation in ['d', 'm']:
             out = dict(operation=self.operation, index=self.contact, pressure=self.pressure, xP=x, yP=y)
         elif self.operation == 'u':
             out = dict(operation=self.operation, index=self.contact)
         elif self.operation == 'w':
             out = dict(operation=self.operation, milliseconds=self.ms)
         else:
-            out = dict()
+            out = {}
         return json.dumps(out)
 
 
@@ -275,7 +263,7 @@ class U2Service(_Service):
     def __init__(self, name, u2obj):
         self.name = name
         self.u2obj = u2obj
-        self.service_url = self.u2obj.path2url("/services/" + name)
+        self.service_url = self.u2obj.path2url(f"/services/{name}")
 
 
 def retry(func):
@@ -292,22 +280,13 @@ def retry(func):
                     retry_sleep(_)
                     init()
                 return func(self, *args, **kwargs)
-            # Can't handle
-            except RequestHumanTakeover:
+            except (RequestHumanTakeover, ConnectionResetError):
                 break
-            # When adb server was killed
-            except ConnectionResetError as e:
-                logger.error(e)
-
-                def init():
-                    self.adb_reconnect()
-            # Emulator closed
             except ConnectionAbortedError as e:
                 logger.error(e)
 
                 def init():
                     self.adb_reconnect()
-            # MinitouchNotInstalledError: Received empty data from minitouch
             except MinitouchNotInstalledError as e:
                 logger.error(e)
 
@@ -316,7 +295,6 @@ def retry(func):
                     if self._minitouch_port:
                         self.adb_forward_remove(f'tcp:{self._minitouch_port}')
                     del_cached_property(self, 'minitouch_builder')
-            # MinitouchOccupiedError: Timeout when connecting to minitouch
             except MinitouchOccupiedError as e:
                 logger.error(e)
 
@@ -325,7 +303,6 @@ def retry(func):
                     if self._minitouch_port:
                         self.adb_forward_remove(f'tcp:{self._minitouch_port}')
                     del_cached_property(self, 'minitouch_builder')
-            # AdbError
             except AdbError as e:
                 if handle_adb_error(e):
                     def init():
@@ -337,7 +314,6 @@ def retry(func):
 
                 def init():
                     del_cached_property(self, 'minitouch_builder')
-            # Unknown, probably a trucked image
             except Exception as e:
                 logger.exception(e)
 
@@ -411,10 +387,9 @@ class Minitouch(Connection):
                         'Received empty data from minitouch, '
                         'probably because minitouch is not installed'
                     )
-                else:
-                    # Minitouch may not start that fast
-                    self.sleep(1)
-                    continue
+                # Minitouch may not start that fast
+                self.sleep(1)
+                continue
 
         # self.max_contacts = max_contacts
         self.max_x = int(max_x)
@@ -428,12 +403,10 @@ class Minitouch(Connection):
         self._minitouch_pid = pid
 
         logger.info(
-            "minitouch running on port: {}, pid: {}".format(self._minitouch_port, self._minitouch_pid)
+            f"minitouch running on port: {self._minitouch_port}, pid: {self._minitouch_pid}"
         )
         logger.info(
-            "max_contact: {}; max_x: {}; max_y: {}; max_pressure: {}".format(
-                max_contacts, max_x, max_y, max_pressure
-            )
+            f"max_contact: {max_contacts}; max_x: {max_x}; max_y: {max_y}; max_pressure: {max_pressure}"
         )
 
     @Config.when(DEVICE_OVER_HTTP=False)

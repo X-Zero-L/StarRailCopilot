@@ -31,12 +31,20 @@ class SynthesizeUI(UI):
         match page:
             case page_menu.name:
                 check_image = MENU_CHECK
-                scroll = Scroll(MENU_SCROLL.button, color=(191, 191, 191), name=MENU_SCROLL.name)
+                scroll = Scroll(
+                    MENU_SCROLL.button,
+                    color=(191, 191, 191),
+                    name=MENU_SCROLL.name,
+                )
             case page_synthesize.name:
                 check_image = SYNTHESIZE_CHECK
-                scroll = Scroll(SYNTHESIZE_SCROLL.button, color=(210, 210, 210), name=SYNTHESIZE_SCROLL.name)
+                scroll = Scroll(
+                    SYNTHESIZE_SCROLL.button,
+                    color=(210, 210, 210),
+                    name=SYNTHESIZE_SCROLL.name,
+                )
             case _:
-                logger.info(f'No page matched, just skip')
+                logger.info('No page matched, just skip')
                 return
 
         while 1:
@@ -108,27 +116,25 @@ class SynthesizeUI(UI):
     def _search_and_select_items(self, target_button: ButtonWrapper = None,
                                  target_button_check: ButtonWrapper = None) -> bool:
         candidate_items = {target_button: target_button_check} if target_button and target_button_check \
-            else self.__class__.default_candidate_items
+                else self.__class__.default_candidate_items
 
         # Search target button from top to bottom
         scroll = Scroll(SYNTHESIZE_SCROLL.button, color=(210, 210, 210), name=SYNTHESIZE_SCROLL.name)
-        if scroll.appear(main=self):
-            skip_first_screenshot = True
-            while 1:
-                if skip_first_screenshot:
-                    skip_first_screenshot = False
-                else:
-                    self.device.screenshot()
-                if self._select_items(candidate_items):
-                    return True
-                if scroll.at_bottom(main=self):
-                    logger.info('There are no suitable items to synthesize')
-                    return False
-                if not scroll.at_bottom(main=self):
-                    scroll.next_page(main=self)
-                    continue
-        else:
+        if not scroll.appear(main=self):
             return self._select_items(candidate_items)
+        skip_first_screenshot = True
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+            if self._select_items(candidate_items):
+                return True
+            if scroll.at_bottom(main=self):
+                logger.info('There are no suitable items to synthesize')
+                return False
+            if not scroll.at_bottom(main=self):
+                scroll.next_page(main=self)
 
     def _open_synthesize_popup(self, skip_first_screenshot=True):
         while 1:

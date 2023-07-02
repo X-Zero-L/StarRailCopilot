@@ -66,8 +66,9 @@ class OcrResultButton:
         """
         for keyword_class in keyword_classes:
             try:
-                matched = keyword_class.find(ocr_text, in_current_server=True, ignore_punctuation=True)
-                return matched
+                return keyword_class.find(
+                    ocr_text, in_current_server=True, ignore_punctuation=True
+                )
             except ScriptError:
                 continue
 
@@ -150,8 +151,10 @@ class Ocr:
         # after proces
         result = self.after_process(result)
         result = self.format_result(result)
-        logger.attr(name='%s %ss' % (self.name, float2str(time.time() - start_time)),
-                    text=str(result))
+        logger.attr(
+            name=f'{self.name} {float2str(time.time() - start_time)}s',
+            text=str(result),
+        )
         return result
 
     def ocr_multi_lines(self, image_list):
@@ -160,12 +163,14 @@ class Ocr:
         image_list = [self.pre_process(image) for image in image_list]
         # ocr
         result_list = self.model.ocr_lines(image_list)
-        result_list = [(result, score) for result, score in result_list]
+        result_list = list(result_list)
         # after process
         result_list = [(self.after_process(result), score) for result, score in result_list]
         result_list = [(self.format_result(result), score) for result, score in result_list]
-        logger.attr(name="%s %ss" % (self.name, float2str(time.time() - start_time)),
-                    text=str([result for result, _ in result_list]))
+        logger.attr(
+            name=f"{self.name} {float2str(time.time() - start_time)}s",
+            text=str([result for result, _ in result_list]),
+        )
         return result_list
 
     def detect_and_ocr(self, image, direct_ocr=False) -> list[BoxedResult]:
@@ -194,8 +199,10 @@ class Ocr:
         for result in results:
             result.ocr_text = self.after_process(result.ocr_text)
 
-        logger.attr(name='%s %ss' % (self.name, float2str(time.time() - start_time)),
-                    text=str([result.ocr_text for result in results]))
+        logger.attr(
+            name=f'{self.name} {float2str(time.time() - start_time)}s',
+            text=str([result.ocr_text for result in results]),
+        )
         return results
 
     def matched_ocr(self, image, keyword_classes, direct_ocr=False) -> list[OcrResultButton]:
@@ -214,9 +221,7 @@ class Ocr:
 
         def is_valid(keyword):
             # Digits will be considered as the index of keyword
-            if keyword.isdigit():
-                return False
-            return True
+            return not keyword.isdigit()
 
         results = self.detect_and_ocr(image, direct_ocr=direct_ocr)
         results = [
@@ -241,12 +246,10 @@ class Digit(Ocr):
         result = super().after_process(result)
         logger.attr(name=self.name, text=str(result))
 
-        res = re.search(r'(\d+)', result)
-        if res:
-            return int(res.group(1))
-        else:
-            logger.warning(f'No digit found in {result}')
-            return 0
+        if res := re.search(r'(\d+)', result):
+            return int(res[1])
+        logger.warning(f'No digit found in {result}')
+        return 0
 
 
 class DigitCounter(Ocr):
@@ -263,8 +266,7 @@ class DigitCounter(Ocr):
         result = super().after_process(result)
         logger.attr(name=self.name, text=str(result))
 
-        res = re.search(r'(\d+)/(\d+)', result)
-        if res:
+        if res := re.search(r'(\d+)/(\d+)', result):
             groups = [int(s) for s in res.groups()]
             current, total = int(groups[0]), int(groups[1])
             # current = min(current, total)
@@ -299,6 +301,4 @@ class Duration(Ocr):
         return timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
     def _sanitize_number(self, number) -> int:
-        if number is None:
-            return 0
-        return int(number)
+        return 0 if number is None else int(number)

@@ -78,7 +78,7 @@ print(f'截图将保存到: {output}')
 while 1:
     print()
     _ = input('按回车键截一张图:')
-    print(f'截图中...')
+    print('截图中...')
     image = device.screenshot()
     now = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S-%f')
     file = f'{output}/{now}.png'

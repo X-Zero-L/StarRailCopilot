@@ -11,10 +11,7 @@ class PopupHandler(ModuleBase):
         Returns:
             If handled.
         """
-        if self.appear_then_click(GET_REWARD, interval=interval):
-            return True
-
-        return False
+        return bool(self.appear_then_click(GET_REWARD, interval=interval))
 
     def handle_battle_pass_notification(self, interval=5) -> bool:
         """
@@ -26,10 +23,9 @@ class PopupHandler(ModuleBase):
         Returns:
             If handled.
         """
-        if self.appear_then_click(BATTLE_PASS_NOTIFICATION, interval=interval):
-            return True
-
-        return False
+        return bool(
+            self.appear_then_click(BATTLE_PASS_NOTIFICATION, interval=interval)
+        )
 
     def handle_monthly_card_reward(self, interval=5) -> bool:
         """
@@ -43,7 +39,4 @@ class PopupHandler(ModuleBase):
         """
         if self.appear_then_click(MONTHLY_CARD_REWARD, interval=interval):
             return True
-        if self.appear_then_click(MONTHLY_CARD_GET_ITEM, interval=interval):
-            return True
-
-        return False
+        return bool(self.appear_then_click(MONTHLY_CARD_GET_ITEM, interval=interval))

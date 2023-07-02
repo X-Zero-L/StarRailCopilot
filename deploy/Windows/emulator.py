@@ -105,15 +105,12 @@ class EmulatorManager(AlasManager):
         for n in range(10):
             backup = f'{adb}.bak{n}' if n else f'{adb}.bak'
             if os.path.exists(backup):
-                if new_backup:
-                    continue
-                else:
+                if not new_backup:
                     return backup
+            elif new_backup:
+                return backup
             else:
-                if new_backup:
-                    return backup
-                else:
-                    continue
+                continue
 
         # Too many backups, override the first one
         return f'{adb}.bak'

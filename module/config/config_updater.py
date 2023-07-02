@@ -61,7 +61,7 @@ class ConfigGenerator:
                 arg['type'] = 'datetime'
                 arg['validate'] = 'datetime'
             # Manual definition has the highest priority
-            arg.update(value)
+            arg |= value
             deep_set(data, keys=path, value=arg)
 
         # Define storage group
@@ -485,11 +485,7 @@ class ConfigUpdater:
             dict:
         """
         old = read_file(filepath_config(config_name))
-        new = self.config_update(old, is_template=is_template)
-        # The updated config did not write into file, although it doesn't matters.
-        # Commented for performance issue
-        # self.write_file(config_name, new)
-        return new
+        return self.config_update(old, is_template=is_template)
 
     @staticmethod
     def write_file(config_name, data, mod_name='alas'):

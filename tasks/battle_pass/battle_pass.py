@@ -86,10 +86,7 @@ class BattlePassUI(UI):
         Returns:
             If handled
         """
-        if self.appear_then_click(CLOSE_CHOOSE_GIFT, interval=interval):
-            return True
-
-        return False
+        return bool(self.appear_then_click(CLOSE_CHOOSE_GIFT, interval=interval))
 
     def _claim_exp(self, skip_first_screenshot=True):
         logger.hr('Claim EXP', level=1)

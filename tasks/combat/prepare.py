@@ -95,33 +95,30 @@ class CombatPrepare(UI):
                 self.device.screenshot()
 
             cost = Digit(OCR_WAVE_COST).ocr_single_line(self.device.image)
-            if cost == 10:
-                if multi:
-                    self.combat_wave_cost = cost
-                    return cost
-                else:
-                    logger.warning(f'Combat wave costs {cost} but does not has multiple waves')
-                    self.combat_wave_cost = cost
-                    return cost
+            if (
+                cost == 10
+                and multi
+                or cost != 10
+                and cost in [30, 40]
+                and not multi
+            ):
+                self.combat_wave_cost = cost
+                return cost
+            elif cost == 10:
+                logger.warning(f'Combat wave costs {cost} but does not has multiple waves')
+                self.combat_wave_cost = cost
+                return cost
             elif cost in [30, 40]:
-                if multi:
-                    logger.warning(f'Combat wave costs {cost} but has multiple waves, '
-                                   f'probably wave amount is preset')
-                    self.combat_set_wave(1)
-                    skip_first_screenshot = True
-                    timeout.reset()
-                    continue
-                else:
-                    self.combat_wave_cost = cost
-                    return cost
+                logger.warning(f'Combat wave costs {cost} but has multiple waves, '
+                               f'probably wave amount is preset')
+                self.combat_set_wave(1)
+                skip_first_screenshot = True
+                timeout.reset()
             else:
                 logger.warning(f'Unexpected combat wave cost: {cost}')
                 continue
 
-        if multi:
-            cost = 10
-        else:
-            cost = 40
+        cost = 10 if multi else 40
         logger.warning(f'Get combat wave cost timeout, assume it costs {cost}')
         self.combat_wave_cost = cost
         return cost

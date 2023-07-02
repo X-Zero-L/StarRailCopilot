@@ -123,8 +123,7 @@ class WSA(Connection):
                 r'\w+ ' + package_name + r'/(?P<activity>[^/\s]+) filter'
             )
             ms = _activityRE.finditer(output)
-            ret = next(ms).group('activity')
-            return ret
+            return next(ms).group('activity')
         except StopIteration:
             raise PackageNotInstalled(package_name)
 
@@ -137,13 +136,14 @@ class WSA(Connection):
         """
         try:
             get_dump_sys_display = str(self.adb_shell(['dumpsys', 'display']))
-            display_id_list = re.findall(r'systemapp:' + self.package + ':' + '(.+?)', get_dump_sys_display, re.S)
-            display_id = int(display_id_list[0])
-            return display_id
+            display_id_list = re.findall(
+                f'systemapp:{self.package}:(.+?)', get_dump_sys_display, re.S
+            )
+            return int(display_id_list[0])
         except IndexError:
             return 0  # When game running on display 0, its display id could not be found
 
     @retry
     def display_resize_wsa(self, display):
-        logger.warning('display ' + str(display) + ' should be resized')
+        logger.warning(f'display {str(display)} should be resized')
         self.adb_shell(['wm', 'size', '1280x720', '-d', str(display)])

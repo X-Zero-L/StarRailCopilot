@@ -79,7 +79,7 @@ def load_screencap(data):
         np.ndarray:
     """
     # Load data
-    header = np.frombuffer(data[0:12], dtype=np.uint32)
+    header = np.frombuffer(data[:12], dtype=np.uint32)
     channel = 4  # screencap sends an RGBA image
     width, height, _ = header  # Usually to be 1280, 720, 1
 
@@ -146,7 +146,7 @@ class Adb(Connection):
         self.__screenshot_method_fixed = self.__screenshot_method
         if len(screenshot) < 500:
             logger.warning(f'Unexpected screenshot: {screenshot}')
-        raise OSError(f'cannot load screenshot')
+        raise OSError('cannot load screenshot')
 
     @retry
     @Config.when(DEVICE_OVER_HTTP=False)
@@ -211,9 +211,10 @@ class Adb(Connection):
         _focusedRE = re.compile(
             r'mCurrentFocus=Window{.*\s+(?P<package>[^\s]+)/(?P<activity>[^\s]+)\}'
         )
-        m = _focusedRE.search(self.adb_shell(['dumpsys', 'window', 'windows']))
-        if m:
-            return m.group('package')
+        if m := _focusedRE.search(
+            self.adb_shell(['dumpsys', 'window', 'windows'])
+        ):
+            return m['package']
 
         # try: adb shell dumpsys activity top
         _activityRE = re.compile(
@@ -245,32 +246,27 @@ class Adb(Connection):
             'android.intent.category.LAUNCHER', '--pct-syskeys', '0', '1'
         ])
         if 'No activities found' in result:
-            # ** No activities found to run, monkey aborted.
             if allow_failure:
                 return False
-            else:
-                logger.error(result)
-                raise PackageNotInstalled(package_name)
-        elif 'inaccessible' in result:
-            # /system/bin/sh: monkey: inaccessible or not found
-            pass
-        else:
+            logger.error(result)
+            raise PackageNotInstalled(package_name)
+        elif 'inaccessible' not in result:
             # Events injected: 1
             # ## Network stats: elapsed time=4ms (0ms mobile, 0ms wifi, 4ms not connected)
             return True
 
         result = self.adb_shell(['dumpsys', 'package', package_name])
-        res = re.search(r'android.intent.action.MAIN:\s+\w+ ([\w.\/]+) filter \w+\s+'
-                        r'.*\s+Category: "android.intent.category.LAUNCHER"',
-                        result)
-        if res:
-            activity_name = res.group(1)
+        if res := re.search(
+            r'android.intent.action.MAIN:\s+\w+ ([\w.\/]+) filter \w+\s+'
+            r'.*\s+Category: "android.intent.category.LAUNCHER"',
+            result,
+        ):
+            activity_name = res[1]
         else:
             if allow_failure:
                 return False
-            else:
-                logger.error(result)
-                raise PackageNotInstalled(package_name)
+            logger.error(result)
+            raise PackageNotInstalled(package_name)
         self.adb_shell(['am', 'start', '-a', 'android.intent.action.MAIN', '-c',
                         'android.intent.category.LAUNCHER', '-n', activity_name])
 
@@ -299,13 +295,10 @@ class Adb(Connection):
             if 'hierchary' in response:
                 # UI hierchary dumped to: /data/local/tmp/hierarchy.xml
                 break
-            else:
-                # <None>
-                # Must kill uiautomator2
-                self.app_stop_adb('com.github.uiautomator')
-                self.app_stop_adb('com.github.uiautomator.test')
-                continue
-
+            # <None>
+            # Must kill uiautomator2
+            self.app_stop_adb('com.github.uiautomator')
+            self.app_stop_adb('com.github.uiautomator.test')
         # Read from device
         content = b''
         for chunk in self.adb.sync.iter_content(temp):
@@ -314,6 +307,4 @@ class Adb(Connection):
             else:
                 break
 
-        # Parse with lxml
-        hierarchy = etree.fromstring(content)
-        return hierarchy
+        return etree.fromstring(content)

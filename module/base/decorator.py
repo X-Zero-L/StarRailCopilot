@@ -148,18 +148,17 @@ def function_drop(rate=0.5, default=None):
         def wrapper(*args, **kwargs):
             if random.uniform(0, 1) > rate:
                 return func(*args, **kwargs)
-            else:
-                cls = ''
-                arguments = [str(arg) for arg in args]
-                if len(arguments):
-                    matched = re.search('<(.*?) object at', arguments[0])
-                    if matched:
-                        cls = matched.group(1) + '.'
-                        arguments.pop(0)
-                arguments += [f'{k}={v}' for k, v in kwargs.items()]
-                arguments = ', '.join(arguments)
-                logger.info(f'Dropped: {cls}{func.__name__}({arguments})')
-                return default
+            cls = ''
+            arguments = [str(arg) for arg in args]
+            if len(arguments):
+                matched = re.search('<(.*?) object at', arguments[0])
+                if matched:
+                    cls = f'{matched[1]}.'
+                    arguments.pop(0)
+            arguments += [f'{k}={v}' for k, v in kwargs.items()]
+            arguments = ', '.join(arguments)
+            logger.info(f'Dropped: {cls}{func.__name__}({arguments})')
+            return default
 
         return wrapper
 

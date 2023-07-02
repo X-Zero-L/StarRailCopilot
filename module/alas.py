@@ -30,8 +30,7 @@ class AzurLaneAutoScript:
     @cached_property
     def config(self):
         try:
-            config = AzurLaneConfig(config_name=self.config_name)
-            return config
+            return AzurLaneConfig(config_name=self.config_name)
         except RequestHumanTakeover:
             logger.critical('Request human takeover')
             exit(1)
@@ -43,8 +42,7 @@ class AzurLaneAutoScript:
     def device(self):
         try:
             from module.device.device import Device
-            device = Device(config=self.config)
-            return device
+            return Device(config=self.config)
         except RequestHumanTakeover:
             logger.critical('Request human takeover')
             exit(1)
@@ -56,8 +54,7 @@ class AzurLaneAutoScript:
     def checker(self):
         try:
             from module.server_checker import ServerChecker
-            checker = ServerChecker(server=self.config.Emulator_PackageName)
-            return checker
+            return ServerChecker(server=self.config.Emulator_PackageName)
         except Exception as e:
             logger.exception(e)
             exit(1)
@@ -301,12 +298,12 @@ class AzurLaneAutoScript:
 
             if success:
                 del_cached_property(self, 'config')
-                continue
             else:
                 # self.config.task_delay(success=False)
                 del_cached_property(self, 'config')
                 self.checker.check_now()
-                continue
+
+            continue
 
 
 if __name__ == '__main__':

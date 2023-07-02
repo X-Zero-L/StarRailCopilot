@@ -33,7 +33,7 @@ except ImportError:
         if stream:
             timeout = None
         c = self.open_transport(timeout=timeout)
-        c.send_command("shell:" + cmdargs)
+        c.send_command(f"shell:{cmdargs}")
         c.check_okay()  # check_okay() is missing here
         if stream:
             return c
@@ -67,10 +67,7 @@ def is_port_using(port_num):
 def random_port(port_range):
     """ get a random port from port set """
     new_port = random.choice(list(range(*port_range)))
-    if is_port_using(new_port):
-        return random_port(port_range)
-    else:
-        return new_port
+    return random_port(port_range) if is_port_using(new_port) else new_port
 
 
 def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
@@ -88,15 +85,11 @@ def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
     """
     if isinstance(stream, AdbConnection):
         stream = stream.conn
-        stream.settimeout(10)
-    else:
-        stream.settimeout(10)
-
+    stream.settimeout(10)
     try:
         fragments = []
         while 1:
-            chunk = stream.recv(chunk_size)
-            if chunk:
+            if chunk := stream.recv(chunk_size):
                 fragments.append(chunk)
                 # See https://stackoverflow.com/questions/23837827/python-server-program-has-high-cpu-usage/41749820#41749820
                 time.sleep(recv_interval)
@@ -129,15 +122,10 @@ class ImageTruncated(Exception):
 
 def retry_sleep(trial):
     # First trial
-    if trial == 0:
+    if trial in [0, 1]:
         pass
-    # Failed once, fast retry
-    elif trial == 1:
-        pass
-    # Failed twice
     elif trial == 2:
         time.sleep(1)
-    # Failed more
     else:
         time.sleep(RETRY_DELAY)
 
@@ -319,8 +307,7 @@ class HierarchyButton:
 
     @cached_property
     def name(self):
-        res = HierarchyButton._name_regex.findall(self.xpath)
-        if res:
+        if res := HierarchyButton._name_regex.findall(self.xpath):
             return res[0]
         else:
             return 'HierarchyButton'

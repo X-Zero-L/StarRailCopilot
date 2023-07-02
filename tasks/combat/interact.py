@@ -8,7 +8,4 @@ class CombatInteract(UI):
         Returns:
             bool: If clicked.
         """
-        if self.appear_then_click(DUNGEON_COMBAT_INTERACT, interval=2):
-            return True
-
-        return False
+        return bool(self.appear_then_click(DUNGEON_COMBAT_INTERACT, interval=2))

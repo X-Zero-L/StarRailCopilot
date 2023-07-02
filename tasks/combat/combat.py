@@ -120,20 +120,17 @@ class Combat(CombatInteract, CombatPrepare, CombatState, CombatTeam, MapControlJ
             in: COMBAT_AGAIN
         """
         current = self.combat_get_trailblaze_power(expect_reduce=True)
-        if self.combat_wave_cost == 10:
-            if current >= self.combat_wave_cost * 6:
-                logger.info(f'Current has {current}, combat costs {self.combat_wave_cost}, can run again')
-                return True
-            else:
-                logger.info(f'Current has {current}, combat costs {self.combat_wave_cost}, can not run again')
-                return False
+        if (
+            self.combat_wave_cost == 10
+            and current >= self.combat_wave_cost * 6
+            or self.combat_wave_cost != 10
+            and current >= self.combat_wave_cost
+        ):
+            logger.info(f'Current has {current}, combat costs {self.combat_wave_cost}, can run again')
+            return True
         else:
-            if current >= self.combat_wave_cost:
-                logger.info(f'Current has {current}, combat costs {self.combat_wave_cost}, can run again')
-                return True
-            else:
-                logger.info(f'Current has {current}, combat costs {self.combat_wave_cost}, can not run again')
-                return False
+            logger.info(f'Current has {current}, combat costs {self.combat_wave_cost}, can not run again')
+            return False
 
     def combat_finish(self) -> bool:
         """

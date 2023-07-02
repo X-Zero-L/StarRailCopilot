@@ -53,8 +53,7 @@ class PipManager(DeployConfig):
         regex = re.compile(r'(.*)-(.*).dist-info')
         try:
             for name in os.listdir(self.python_site_packages):
-                res = regex.search(name)
-                if res:
+                if res := regex.search(name):
                     dep = DataDependency(name=res.group(1), version=res.group(2))
                     data.append(dep)
         except FileNotFoundError:
@@ -68,9 +67,8 @@ class PipManager(DeployConfig):
         file = self.filepath('./requirements.txt')
         try:
             with open(file, 'r', encoding='utf-8') as f:
-                for line in f.readlines():
-                    res = regex.search(line)
-                    if res:
+                for line in f:
+                    if res := regex.search(line):
                         dep = DataDependency(name=res.group(1), version=res.group(2))
                         data.append(dep)
         except FileNotFoundError:
@@ -82,10 +80,11 @@ class PipManager(DeployConfig):
         """
         A poor dependency comparison, but much much faster than `pip install` and `pip list`
         """
-        data = []
-        for dep in self.set_required_dependency:
-            if dep not in self.set_installed_dependency:
-                data.append(dep)
+        data = [
+            dep
+            for dep in self.set_required_dependency
+            if dep not in self.set_installed_dependency
+        ]
         return set(data)
 
     def pip_install(self):

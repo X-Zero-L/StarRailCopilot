@@ -61,43 +61,31 @@ class Keyword:
         return True
 
     def _keywords_to_find(self, in_current_server=False, ignore_punctuation=True):
-        if in_current_server:
-            match server.server:
-                case 'cn':
-                    if ignore_punctuation:
-                        return [self.cn_parsed]
-                    else:
-                        return [self.cn]
-                case 'en':
-                    if ignore_punctuation:
-                        return [self.en_parsed]
-                    else:
-                        return [self.en]
-                case 'jp':
-                    if ignore_punctuation:
-                        return [self.jp_parsed]
-                    else:
-                        return [self.jp]
-                case 'cht':
-                    if ignore_punctuation:
-                        return [self.cht_parsed]
-                    else:
-                        return [self.cht]
-        else:
-            if ignore_punctuation:
-                return [
+        if not in_current_server:
+            return (
+                [
                     self.cn_parsed,
                     self.en_parsed,
                     self.jp_parsed,
                     self.cht_parsed,
                 ]
-            else:
-                return [
+                if ignore_punctuation
+                else [
                     self.cn,
                     self.en,
                     self.jp,
                     self.cht,
                 ]
+            )
+        match server.server:
+            case 'cn':
+                return [self.cn_parsed] if ignore_punctuation else [self.cn]
+            case 'en':
+                return [self.en_parsed] if ignore_punctuation else [self.en]
+            case 'jp':
+                return [self.jp_parsed] if ignore_punctuation else [self.jp]
+            case 'cht':
+                return [self.cht_parsed] if ignore_punctuation else [self.cht]
 
     """
     Class attributes and methods
@@ -145,10 +133,7 @@ class Keyword:
                 if name == instance.name:
                     return instance
         # Probably an in-game name
-        if ignore_punctuation:
-            name = parse_name(name)
-        else:
-            name = str(name)
+        name = parse_name(name) if ignore_punctuation else str(name)
         instance: Keyword
         for instance in cls.instances.values():
             for keyword in instance._keywords_to_find(

@@ -35,10 +35,7 @@ class ScrollableCode:
         self.keep_bottom = keep_bottom
 
         self.id = "".join(random.choice(string.ascii_letters) for _ in range(10))
-        self.html = (
-            """<pre id="%s" class="container-log"><code style="white-space:break-spaces;"></code></pre>"""
-            % self.id
-        )
+        self.html = f"""<pre id="{self.id}" class="container-log"><code style="white-space:break-spaces;"></code></pre>"""
 
     def output(self):
         # .style("display: grid; overflow-y: auto;")
@@ -51,7 +48,7 @@ class ScrollableCode:
             """.format(
                     dom_id=self.id
                 ),
-                text=str(text),
+                text=text,
             )
             if self.keep_bottom:
                 self.scroll()
@@ -101,14 +98,12 @@ class RichLog:
         with self.console.capture():
             self.console.print(renderable)
 
-        html = self.console.export_html(
+        return self.console.export_html(
             theme=self.terminal_theme,
             clear=True,
             code_format=LOG_CODE_FORMAT,
             inline_styles=True,
         )
-        # print(html)
-        return html
 
     def extend(self, text):
         if text:
@@ -292,20 +287,17 @@ T_Output_Kwargs = Dict[str, Union[str, Dict[str, Any]]]
 
 def get_title_help(kwargs: T_Output_Kwargs) -> Output:
     title: str = kwargs.get("title")
-    help_text: str = kwargs.get("help")
-
-    if help_text:
-        res = put_column(
+    return (
+        put_column(
             [
                 put_text(title).style("--arg-title--"),
                 put_text(help_text).style("--arg-help--"),
             ],
             size="auto 1fr",
         )
-    else:
-        res = put_text(title).style("--arg-title--")
-
-    return res
+        if (help_text := kwargs.get("help"))
+        else put_text(title).style("--arg-title--")
+    )
 
 
 # args input widget
@@ -445,10 +437,7 @@ def put_output(output_kwargs: T_Output_Kwargs) -> Optional[Output]:
 
 
 def get_loading_style(shape: str, fill: bool) -> str:
-    if fill:
-        return f"--loading-{shape}-fill--"
-    else:
-        return f"--loading-{shape}--"
+    return f"--loading-{shape}-fill--" if fill else f"--loading-{shape}--"
 
 
 def put_loading_text(

@@ -223,7 +223,7 @@ class PlatformWindows(PlatformBase, EmulatorManager):
             interval.wait()
             interval.reset()
             if timeout.reached():
-                logger.warning(f'Emulator start timeout')
+                logger.warning('Emulator start timeout')
                 return False
 
             # Check emulator window showing up
@@ -264,16 +264,14 @@ class PlatformWindows(PlatformBase, EmulatorManager):
 
             # Check azuelane package
             packages = self.list_azurlane_packages(show_log=False)
-            if len(packages):
-                pass
-            else:
+            if not len(packages):
                 continue
             show_package(packages)
 
             # All check passed
             break
 
-        if new_window != 0 and new_window != current_window:
+        if new_window not in [0, current_window]:
             logger.info(f'Minimize new window: {new_window}')
             minimize_window(new_window)
         if current_window:

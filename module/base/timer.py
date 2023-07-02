@@ -10,7 +10,7 @@ def timer(function):
 
         result = function(*args, **kwargs)
         t1 = time.time()
-        print('%s: %s s' % (function.__name__, str(round(t1 - t0, 10))))
+        print(f'{function.__name__}: {str(round(t1 - t0, 10))} s')
         return result
 
     return function_timer
@@ -107,10 +107,7 @@ class Timer:
         Returns:
             float
         """
-        if self.started():
-            return time.time() - self._current
-        else:
-            return 0.
+        return time.time() - self._current if self.started() else 0.
 
     def reached(self):
         """

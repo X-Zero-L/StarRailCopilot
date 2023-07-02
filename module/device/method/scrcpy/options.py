@@ -48,7 +48,7 @@ class ScrcpyOptions:
         Returns:
             ['log_level=info', 'max_size=1280', ...]
         """
-        options = [
+        return [
             'log_level=info',
             'max_size=1280',
             # 20Mbps, the maximum output bitrate of scrcpy
@@ -84,7 +84,6 @@ class ScrcpyOptions:
             'clipboard_autosync=false',
             'downsize_on_error=false',
         ]
-        return options
 
     @classmethod
     def command_v125(cls, jar_path='/data/local/tmp/scrcpy-server.jar') -> t.List[str]:
@@ -103,29 +102,28 @@ class ScrcpyOptions:
 
     @classmethod
     def command_v120(cls, jar_path='/data/local/tmp/scrcpy-server.jar') -> t.List[str]:
-        commands = [
+        return [
             f"CLASSPATH={jar_path}",
             "app_process",
             "/",
             "com.genymobile.scrcpy.Server",
-            "1.20",  # Scrcpy server version
-            "info",  # Log level: info, verbose...
-            f"1280",  # Max screen width (long side)
-            f"20000000",  # Bitrate of video
-            f"{cls.frame_rate}",  # Max frame per second
-            f"{const.LOCK_SCREEN_ORIENTATION_UNLOCKED}",  # Lock screen orientation: LOCK_SCREEN_ORIENTATION
-            "true",  # Tunnel forward
-            "-",  # Crop screen
-            "false",  # Send frame rate to client
-            "true",  # Control enabled
-            "0",  # Display id
-            "false",  # Show touches
-            "false",  # Stay awake
-            cls.codec_options(),  # Codec (video encoding) options
-            "-",  # Encoder name
-            "false",  # Power off screen after server closed
+            "1.20",
+            "info",
+            "1280",
+            "20000000",
+            f"{cls.frame_rate}",
+            f"{const.LOCK_SCREEN_ORIENTATION_UNLOCKED}",
+            "true",
+            "-",
+            "false",
+            "true",
+            "0",
+            "false",
+            "false",
+            cls.codec_options(),
+            "-",
+            "false",
         ]
-        return commands
 
 
 if __name__ == '__main__':

@@ -146,12 +146,11 @@ class Scroll:
                 break
             if self.length:
                 self.drag_timeout.reset()
+            elif self.drag_timeout.reached():
+                logger.warning('Scroll disappeared, assume scroll set')
+                break
             else:
-                if self.drag_timeout.reached():
-                    logger.warning('Scroll disappeared, assume scroll set')
-                    break
-                else:
-                    continue
+                continue
 
             if self.drag_interval.reached():
                 p1 = random_rectangle_point(self.position_to_screen(current), n=1)

@@ -191,10 +191,7 @@ class TaskHandler:
 
     def get_task(self, name) -> Task:
         with self._lock:
-            for task in self.tasks:
-                if task.name == name:
-                    return task
-            return None
+            return next((task for task in self.tasks if task.name == name), None)
 
     def loop(self) -> None:
         """
@@ -231,8 +228,7 @@ class TaskHandler:
         logger.info("End of task handler loop")
 
     def _get_thread(self) -> threading.Thread:
-        thread = threading.Thread(target=self.loop, daemon=True)
-        return thread
+        return threading.Thread(target=self.loop, daemon=True)
 
     def start(self) -> None:
         """
@@ -337,15 +333,12 @@ class Switch:
                     d = {"func": d}
                 func = d["func"]
                 args = d.get("args", tuple())
-                kwargs = d.get("kwargs", dict())
+                kwargs = d.get("kwargs", {})
                 func(*args, **kwargs)
 
     def g(self) -> Generator:
         g = get_generator(self.switch)
-        if self.name:
-            name = self.name
-        else:
-            name = self.get_state.__name__
+        name = self.name if self.name else self.get_state.__name__
         g.__name__ = f"Switch_{name}_refresh"
         return g
 
@@ -408,10 +401,7 @@ def parse_pin_value(val, valuetype: str = None):
     checkbox return [] or [True] (define in put_checkbox_)
     """
     if isinstance(val, list):
-        if len(val) == 0:
-            return False
-        else:
-            return True
+        return len(val) != 0
     elif valuetype:
         return str2type[valuetype](val)
     elif isinstance(val, (int, float)):
@@ -421,10 +411,7 @@ def parse_pin_value(val, valuetype: str = None):
             v = float(val)
         except ValueError:
             return val
-        if v.is_integer():
-            return int(v)
-        else:
-            return v
+        return int(v) if v.is_integer() else v
 
 
 def login(password):
@@ -441,7 +428,7 @@ def login(password):
 
 def get_window_visibility_state():
     ret = eval_js("document.visibilityState")
-    return False if ret == "hidden" else True
+    return ret != "hidden"
 
 
 # https://pywebio.readthedocs.io/zh_CN/latest/cookbook.html#cookie-and-localstorage-manipulation
@@ -461,7 +448,7 @@ def re_fullmatch(pattern, string):
 
 
 def get_next_time(t: datetime.time):
-    now = datetime.datetime.today().time()
+    now = datetime.datetime.now().time()
     second = (
         (t.hour - now.hour) * 3600
         + (t.minute - now.minute) * 60
@@ -492,11 +479,7 @@ def on_task_exception(self):
             word_wrap=True, extra_lines=1, show_locals=True
         )
 
-    if State.theme == "dark":
-        theme = DARK_TERMINAL_THEME
-    else:
-        theme = LIGHT_TERMINAL_THEME
-
+    theme = DARK_TERMINAL_THEME if State.theme == "dark" else LIGHT_TERMINAL_THEME
     html = traceback_console.export_html(
         theme=theme, code_format=TRACEBACK_CODE_FORMAT, inline_styles=True
     )

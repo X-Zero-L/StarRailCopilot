@@ -53,11 +53,7 @@ class Switch:
         Returns:
             bool
         """
-        for data in self.state_list:
-            if main.appear(data['check_button']):
-                return True
-
-        return False
+        return any(main.appear(data['check_button']) for data in self.state_list)
 
     def get(self, main):
         """
@@ -67,11 +63,14 @@ class Switch:
         Returns:
             str: state name or 'unknown'.
         """
-        for data in self.state_list:
-            if main.appear(data['check_button']):
-                return data['state']
-
-        return 'unknown'
+        return next(
+            (
+                data['state']
+                for data in self.state_list
+                if main.appear(data['check_button'])
+            ),
+            'unknown',
+        )
 
     def click(self, state, main):
         """

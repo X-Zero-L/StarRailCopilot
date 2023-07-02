@@ -29,11 +29,14 @@ class AssignmentSwitch(Switch):
         Returns:
             str: state name or 'unknown'.
         """
-        for data in self.state_list:
-            if main.image_color_count(data['check_button'], self.active_color):
-                return data['state']
-
-        return 'unknown'
+        return next(
+            (
+                data['state']
+                for data in self.state_list
+                if main.image_color_count(data['check_button'], self.active_color)
+            ),
+            'unknown',
+        )
 
 
 class AssignmentOcr(Ocr):

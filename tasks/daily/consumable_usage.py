@@ -90,25 +90,22 @@ class ConsumableUsageUI(UI):
                 # Scroll bar flipping
                 if not scroll.at_bottom(main=self):
                     scroll.next_page(main=self)
+        elif self.appear(SIMPLE_PROTECTIVE_GEAR, similarity=0.7):
+            while 1:
+                if skip_first_screenshot:
+                    skip_first_screenshot = False
+                else:
+                    self.device.screenshot()
+
+                if self.appear(SIMPLE_PROTECTIVE_GEAR_CHECK):
+                    logger.info('The consumable to be used have been selected')
+                    return True
+                if self.appear_then_click(SIMPLE_PROTECTIVE_GEAR, similarity=0.7):
+                    logger.info('Select the consumable which to be used')
                     continue
         else:
-            # Determine if the specified consumable can be found
-            if self.appear(SIMPLE_PROTECTIVE_GEAR, similarity=0.7):
-                while 1:
-                    if skip_first_screenshot:
-                        skip_first_screenshot = False
-                    else:
-                        self.device.screenshot()
-
-                    if self.appear(SIMPLE_PROTECTIVE_GEAR_CHECK):
-                        logger.info('The consumable to be used have been selected')
-                        return True
-                    if self.appear_then_click(SIMPLE_PROTECTIVE_GEAR, similarity=0.7):
-                        logger.info('Select the consumable which to be used')
-                        continue
-            else:
-                logger.info('Can not find the consumable which to be used, just skip')
-                return False
+            logger.info('Can not find the consumable which to be used, just skip')
+            return False
 
     def _click_use(self, skip_first_screenshot=True):
         """

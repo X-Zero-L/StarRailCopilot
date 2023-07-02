@@ -73,8 +73,6 @@ def patch_uiautomator2():
     """
     init_file = './toolkit/Lib/site-packages/uiautomator2/init.py'
     cache_dir = './toolkit/Lib/site-packages/uiautomator2cache/cache'
-    appdir = "os.path.join(__file__, '../../uiautomator2cache')"
-
     modified = False
     try:
         with open(init_file, 'r', encoding='utf-8') as f:
@@ -83,9 +81,7 @@ def patch_uiautomator2():
         logger.info(f'{init_file} not exist')
         return
 
-    # Patch minicap_urls
-    res = re.search(r'self.minicap_urls', content)
-    if res:
+    if res := re.search(r'self.minicap_urls', content):
         content = re.sub(r'self.minicap_urls', '[]', content)
         modified = True
         logger.info(f'{init_file} minicap_urls patched')
@@ -94,9 +90,10 @@ def patch_uiautomator2():
 
     # Patch appdir
     if os.path.exists(cache_dir):
-        res = re.search(r'appdir ?=(.*)\n', content)
-        if res:
-            prev = res.group(1).strip()
+        if res := re.search(r'appdir ?=(.*)\n', content):
+            prev = res[1].strip()
+            appdir = "os.path.join(__file__, '../../uiautomator2cache')"
+
             if prev == appdir:
                 logger.info(f'{init_file} appdir already patched')
             else:
@@ -129,8 +126,7 @@ def patch_apkutils2():
         logger.info(f'{mixin} not exist')
         return
 
-    res = re.search(r'import apkutils2', content)
-    if res:
+    if res := re.search(r'import apkutils2', content):
         content = re.sub(r'import apkutils2', '', content)
         with open(mixin, 'w', encoding='utf-8') as f:
             f.write(content)

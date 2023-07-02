@@ -212,9 +212,7 @@ def deep_get(d, keys, default=None):
     assert type(keys) is list
     if d is None:
         return default
-    if not keys:
-        return d
-    return deep_get(d.get(keys[0]), keys[1:], default)
+    return d if not keys else deep_get(d.get(keys[0]), keys[1:], default)
 
 
 def deep_set(d, keys, value):
@@ -257,10 +255,7 @@ def deep_default(d, keys, value):
         keys = keys.split('.')
     assert type(keys) is list
     if not keys:
-        if d:
-            return d
-        else:
-            return value
+        return d if d else value
     if not isinstance(d, dict):
         d = {}
     d[keys[0]] = deep_default(d.get(keys[0], {}), keys[1:], value)
@@ -306,20 +301,14 @@ def parse_value(value, data):
     if isinstance(value, str):
         if value == '':
             return None
-        if value == 'true' or value == 'True':
+        if value in ['true', 'True']:
             return True
-        if value == 'false' or value == 'False':
+        if value in ['false', 'False']:
             return False
-        if '.' in value:
-            try:
-                return float(value)
-            except ValueError:
-                pass
-        else:
-            try:
-                return int(value)
-            except ValueError:
-                pass
+        try:
+            return float(value) if '.' in value else int(value)
+        except ValueError:
+            pass
         try:
             return datetime.fromisoformat(value)
         except ValueError:
@@ -344,7 +333,7 @@ def data_to_type(data, **kwargs):
     Returns:
         str:
     """
-    kwargs.update(data)
+    kwargs |= data
     if isinstance(kwargs['value'], bool):
         return 'checkbox'
     elif 'option' in kwargs and kwargs['option']:
@@ -422,11 +411,10 @@ def random_normal_distribution_int(a, b, n=3):
     Returns:
         int
     """
-    if a < b:
-        output = sum([random.randint(a, b) for _ in range(n)]) / n
-        return int(round(output))
-    else:
+    if a >= b:
         return b
+    output = sum(random.randint(a, b) for _ in range(n)) / n
+    return int(round(output))
 
 
 def ensure_time(second, n=3, precision=3):
@@ -469,8 +457,7 @@ def get_os_next_reset():
     server_now = datetime.now() - diff
     server_reset = (server_now.replace(day=1) + timedelta(days=32)) \
         .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    local_reset = server_reset + diff
-    return local_reset
+    return server_reset + diff
 
 
 def get_os_reset_remain():
@@ -509,8 +496,7 @@ def get_server_next_update(daily_trigger):
         s = (future - local_now).total_seconds() % 86400
         future = local_now + timedelta(seconds=s)
         trigger.append(future)
-    update = sorted(trigger)[0]
-    return update
+    return sorted(trigger)[0]
 
 
 def get_server_last_update(daily_trigger):
@@ -533,8 +519,7 @@ def get_server_last_update(daily_trigger):
         s = (future - local_now).total_seconds() % 86400 - 86400
         future = local_now + timedelta(seconds=s)
         trigger.append(future)
-    update = sorted(trigger)[-1]
-    return update
+    return sorted(trigger)[-1]
 
 
 def nearest_future(future, interval=120):
@@ -581,8 +566,7 @@ def get_nearest_weekday_date(target):
     server_reset = (server_now + timedelta(days=days_ahead)) \
         .replace(hour=0, minute=0, second=0, microsecond=0)
 
-    local_reset = server_reset + diff
-    return local_reset
+    return server_reset + diff
 
 
 def get_server_weekday():
@@ -592,8 +576,7 @@ def get_server_weekday():
     """
     diff = server_time_offset()
     server_now = datetime.now() - diff
-    result = server_now.weekday()
-    return result
+    return server_now.weekday()
 
 
 def random_id(length=32):
@@ -619,8 +602,7 @@ def to_list(text, length=1):
     """
     if text.isdigit():
         return [int(text)] * length
-    out = [int(letter.strip()) for letter in text.split(',')]
-    return out
+    return [int(letter.strip()) for letter in text.split(',')]
 
 
 def type_to_str(typ):

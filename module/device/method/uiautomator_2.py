@@ -171,13 +171,13 @@ class Uiautomator2(Connection):
             x, y, second = data
             if index == 0:
                 self.u2.touch.down(x, y)
-                logger.info(point2str(x, y) + ' down')
+                logger.info(f'{point2str(x, y)} down')
             elif index - length == -1:
                 self.u2.touch.up(x, y)
-                logger.info(point2str(x, y) + ' up')
+                logger.info(f'{point2str(x, y)} up')
             else:
                 self.u2.touch.move(x, y)
-                logger.info(point2str(x, y) + ' move')
+                logger.info(f'{point2str(x, y)} move')
             self.sleep(second)
 
     def drag_uiautomator2(self, p1, p2, segments=1, shake=(0, 15), point_random=(-10, -10, 10, 10),
@@ -239,8 +239,7 @@ class Uiautomator2(Connection):
     @retry
     def dump_hierarchy_uiautomator2(self) -> etree._Element:
         content = self.u2.dump_hierarchy(compressed=True)
-        hierarchy = etree.fromstring(content.encode('utf-8'))
-        return hierarchy
+        return etree.fromstring(content.encode('utf-8'))
 
     @retry
     def resolution_uiautomator2(self) -> t.Tuple[int, int]:
@@ -286,16 +285,18 @@ class Uiautomator2(Connection):
         """
         resp = self.u2.http.get("/proc/list", timeout=10)
         resp.raise_for_status()
-        result = [
+        return [
             ProcessInfo(
                 pid=proc['pid'],
                 ppid=proc['ppid'],
                 thread_count=proc['threadCount'],
-                cmdline=' '.join(proc['cmdline']) if proc['cmdline'] is not None else '',
+                cmdline=' '.join(proc['cmdline'])
+                if proc['cmdline'] is not None
+                else '',
                 name=proc['name'],
-            ) for proc in resp.json()
+            )
+            for proc in resp.json()
         ]
-        return result
 
     @retry
     def u2_shell_background(self, cmdline, timeout=10) -> ShellBackgroundResponse:

@@ -167,13 +167,15 @@ class AlasGUI(Frame):
         Set menu
         """
         put_buttons(
-            [{
-                "label": t("Gui.MenuAlas.Overview"),
-                "value": "Overview",
-                "color": "menu",
-            }],
+            [
+                {
+                    "label": t("Gui.MenuAlas.Overview"),
+                    "value": "Overview",
+                    "color": "menu",
+                }
+            ],
             onclick=[self.alas_overview],
-        ).style(f"--menu-Overview--")
+        ).style("--menu-Overview--")
 
         for menu, task_data in self.ALAS_MENU.items():
             if task_data.get("page") == "tool":
@@ -204,13 +206,15 @@ class AlasGUI(Frame):
                          )
                 for task in task_data.get("tasks", []):
                     put_buttons(
-                        [{
-                            "label": t(f"Task.{task}.name"),
-                            "value": task,
-                            "color": "menu",
-                        }],
+                        [
+                            {
+                                "label": t(f"Task.{task}.name"),
+                                "value": task,
+                                "color": "menu",
+                            }
+                        ],
                         onclick=_onclick,
-                    ).style(f"--menu-{task}--").style(f"padding-left: 0.75rem")
+                    ).style(f"--menu-{task}--").style("padding-left: 0.75rem")
 
         self.alas_overview()
 
@@ -224,8 +228,7 @@ class AlasGUI(Frame):
 
         put_scope("_groups", [put_none(), put_scope("groups"), put_scope("navigator")])
 
-        task_help: str = t(f"Task.{task}.help")
-        if task_help:
+        if task_help := t(f"Task.{task}.help"):
             put_scope(
                 "group__info",
                 scope="groups",
@@ -271,10 +274,7 @@ class AlasGUI(Frame):
             output_kwargs["value"] = value
             # Options
             output_kwargs["options"] = options = output_kwargs.pop("option", [])
-            # Options label
-            options_label = []
-            for opt in options:
-                options_label.append(t(f"{group_name}.{arg_name}.{opt}"))
+            options_label = [t(f"{group_name}.{arg_name}.{opt}") for opt in options]
             output_kwargs["options_label"] = options_label
             # Help
             arg_help = t(f"{group_name}.{arg_name}.help")
@@ -321,7 +321,7 @@ class AlasGUI(Frame):
     @use_scope("content", clear=True)
     def alas_overview(self) -> None:
         self.init_menu(name="Overview")
-        self.set_title(t(f"Gui.MenuAlas.Overview"))
+        self.set_title(t("Gui.MenuAlas.Overview"))
 
         put_scope("overview", [put_scope("schedulers"), put_scope("logs")])
 
@@ -450,11 +450,11 @@ class AlasGUI(Frame):
             invalid = []
             config = read(config_name)
             for k, v in modified.copy().items():
-                valuetype = deep_get(self.ALAS_ARGS, k + ".valuetype")
+                valuetype = deep_get(self.ALAS_ARGS, f"{k}.valuetype")
                 v = parse_pin_value(v, valuetype)
-                validate = deep_get(self.ALAS_ARGS, k + ".validate")
+                validate = deep_get(self.ALAS_ARGS, f"{k}.validate")
                 if not len(str(v)):
-                    default = deep_get(self.ALAS_ARGS, k + ".value")
+                    default = deep_get(self.ALAS_ARGS, f"{k}.value")
                     modified[k] = default
                     deep_set(config, k, default)
                     valid.append(k)
@@ -661,7 +661,7 @@ class AlasGUI(Frame):
             label=t("Gui.MenuDevelop.HomePage"),
             onclick=self.show,
             color="menu",
-        ).style(f"--menu-HomePage--")
+        ).style("--menu-HomePage--")
 
         # put_button(
         #     label=t("Gui.MenuDevelop.Translate"),
@@ -673,19 +673,19 @@ class AlasGUI(Frame):
             label=t("Gui.MenuDevelop.Update"),
             onclick=self.dev_update,
             color="menu",
-        ).style(f"--menu-Update--")
+        ).style("--menu-Update--")
 
         put_button(
             label=t("Gui.MenuDevelop.Remote"),
             onclick=self.dev_remote,
             color="menu",
-        ).style(f"--menu-Remote--")
+        ).style("--menu-Remote--")
 
         put_button(
             label=t("Gui.MenuDevelop.Utils"),
             onclick=self.dev_utils,
             color="menu",
-        ).style(f"--menu-Utils--")
+        ).style("--menu-Utils--")
 
     def dev_translate(self) -> None:
         go_app("translate", new_window=True)
@@ -733,7 +733,7 @@ class AlasGUI(Frame):
                     f"origin/{updater.Branch}", n=20, short_sha1=True
                 )
                 put_table(
-                    [commit for commit in history],
+                    list(history),
                     header=[
                         "SHA1",
                         t("Gui.Update.Author"),
@@ -1259,7 +1259,7 @@ def app():
     logger.hr("Webui configs")
     logger.attr("Theme", State.deploy_config.Theme)
     logger.attr("Language", lang.LANG)
-    logger.attr("Password", True if key else False)
+    logger.attr("Password", bool(key))
     logger.attr("CDN", cdn)
 
     def index():

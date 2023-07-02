@@ -10,14 +10,14 @@ TRANSLATE_MODE = False
 
 def set_language(s: str, refresh=False):
     global LANG
-    for i, lang in enumerate(LANGUAGES):
-        # pywebio.session.info.user_language return `zh-CN` or `zh-cn`, depends on browser
-        if lang.lower() == s.lower():
-            LANG = LANGUAGES[i]
-            break
-    else:
-        LANG = "en-US"
-
+    LANG = next(
+        (
+            LANGUAGES[i]
+            for i, lang in enumerate(LANGUAGES)
+            if lang.lower() == s.lower()
+        ),
+        "en-US",
+    )
     State.deploy_config.Language = LANG
 
     if refresh:
@@ -31,9 +31,7 @@ def t(s, *args, **kwargs):
     Get translation.
     other args, kwargs pass to .format()
     """
-    if TRANSLATE_MODE:
-        return s
-    return _t(s, LANG).format(*args, **kwargs)
+    return s if TRANSLATE_MODE else _t(s, LANG).format(*args, **kwargs)
 
 
 def _t(s, lang=None):

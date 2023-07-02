@@ -181,6 +181,7 @@ def translate():
             for k in modified[LANG].keys():
                 deep_set(d, k, modified[LANG][k])
             write_file(filepath_i18n(LANG), d)
+
     defer_call(save)
 
     def loop():
@@ -219,8 +220,8 @@ def translate():
             ])
         ])
         V.lang = data['language']
-        V.untranslated_only = True if 'untranslated' in data['check'] else False
-        V.clear = True if 'clear' in data['check'] else False
+        V.untranslated_only = 'untranslated' in data['check']
+        V.clear = 'clear' in data['check']
 
     put_buttons([
         {"label": "Start", "value": "start"},

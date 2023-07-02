@@ -112,7 +112,7 @@ class SelectedGrids:
         """
         right.create_index(*on_attr)
         for grid in self:
-            attr_value = tuple([grid.__getattribute__(attr) for attr in on_attr])
+            attr_value = tuple(grid.__getattribute__(attr) for attr in on_attr)
             right_grid = right.indexed_select(*attr_value).first_or_none()
             if right_grid is not None:
                 for attr in set_attr:
@@ -228,11 +228,7 @@ class SelectedGrids:
         Returns:
             SelectedGrids:
         """
-        new = []
-        for grid in self.grids:
-            if grid in grids.grids:
-                new.append(grid)
-
+        new = [grid for grid in self.grids if grid in grids.grids]
         return SelectedGrids(new)
 
     def delete(self, grids):
@@ -256,11 +252,10 @@ class SelectedGrids:
         """
         if not self:
             return self
-        if len(args):
-            grids = sorted(self.grids, key=operator.attrgetter(*args))
-            return SelectedGrids(grids)
-        else:
+        if not len(args):
             return self
+        grids = sorted(self.grids, key=operator.attrgetter(*args))
+        return SelectedGrids(grids)
 
     def sort_by_camera_distance(self, camera):
         """
@@ -317,7 +312,7 @@ class RoadGrids:
                 self.grids.append(SelectedGrids(grids=[grid]))
 
     def __str__(self):
-        return str(' - '.join([str(grid) for grid in self.grids]))
+        return ' - '.join([str(grid) for grid in self.grids])
 
     def roadblocks(self):
         """
@@ -337,9 +332,9 @@ class RoadGrids:
         """
         grids = []
         for block in self.grids:
-            if any([grid.is_fleet for grid in block]):
+            if any(grid.is_fleet for grid in block):
                 continue
-            if any([grid.is_cleared for grid in block]):
+            if any(grid.is_cleared for grid in block):
                 continue
             if block.count - block.select(is_enemy=True).count == 1:
                 grids += block.select(is_enemy=True).grids
@@ -352,9 +347,9 @@ class RoadGrids:
         """
         grids = []
         for block in self.grids:
-            if any([grid.is_fleet for grid in block]):
+            if any(grid.is_fleet for grid in block):
                 continue
-            if any([grid.is_cleared for grid in block]):
+            if any(grid.is_cleared for grid in block):
                 continue
             if block.select(is_enemy=True).count >= 1:
                 grids += block.select(is_enemy=True).grids

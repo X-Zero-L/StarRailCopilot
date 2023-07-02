@@ -73,13 +73,12 @@ class Device(Screenshot, Control, AppControl, Platform):
         try:
             super().screenshot()
         except RequestHumanTakeover:
-            if not self.ascreencap_available:
-                logger.error('aScreenCap unavailable on current device, fallback to auto')
-                self.run_simple_screenshot_benchmark()
-                super().screenshot()
-            else:
+            if self.ascreencap_available:
                 raise
 
+            logger.error('aScreenCap unavailable on current device, fallback to auto')
+            self.run_simple_screenshot_benchmark()
+            super().screenshot()
         return self.image
 
     def release_during_wait(self):
@@ -109,7 +108,7 @@ class Device(Screenshot, Control, AppControl, Platform):
         self.stuck_record_clear()
 
         if self.app_is_running():
-            raise GameStuckError(f'Wait too long')
+            raise GameStuckError('Wait too long')
         else:
             raise GameNotRunningError('Game died')
 

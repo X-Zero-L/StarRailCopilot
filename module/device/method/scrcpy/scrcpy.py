@@ -28,35 +28,24 @@ def retry(func):
                     retry_sleep(_)
                     init()
                 return func(self, *args, **kwargs)
-            # Can't handle
-            except RequestHumanTakeover:
+            except (RequestHumanTakeover, ConnectionResetError):
                 break
-            # When adb server was killed
-            except ConnectionResetError as e:
-                logger.error(e)
-
-                def init():
-                    self.adb_reconnect()
-            # Emulator closed
             except ConnectionAbortedError as e:
                 logger.error(e)
 
                 def init():
                     self.adb_reconnect()
-            # ScrcpyError
             except ScrcpyError as e:
                 logger.error(e)
 
                 def init():
                     self.scrcpy_init()
-            # AdbError
             except AdbError as e:
                 if handle_adb_error(e):
                     def init():
                         self.adb_reconnect()
                 else:
                     break
-            # Unknown, probably a trucked image
             except Exception as e:
                 logger.exception(e)
 
@@ -88,8 +77,7 @@ class Scrcpy(ScrcpyCore, Uiautomator2):
                 if self._scrcpy_stream_loop_thread is None or not self._scrcpy_stream_loop_thread.is_alive():
                     raise ScrcpyError('_scrcpy_stream_loop_thread died')
                 if self._scrcpy_last_frame_time > now:
-                    screenshot = self._scrcpy_last_frame.copy()
-                    return screenshot
+                    return self._scrcpy_last_frame.copy()
 
     @retry
     def click_scrcpy(self, x, y):

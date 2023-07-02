@@ -95,7 +95,7 @@ class AssignmentDispatch(AssignmentUI):
                 self.device.screenshot()
             # End
             if self.appear(DISPATCHED):
-                logger.info(f'Assignment dispatched')
+                logger.info('Assignment dispatched')
                 break
             # Click
             if self.appear_then_click(CONFIRM_ASSIGNMENT, interval=2):

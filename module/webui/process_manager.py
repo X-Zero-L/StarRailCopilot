@@ -81,10 +81,7 @@ class ProcessManager:
 
     @property
     def alive(self) -> bool:
-        if self._process is not None:
-            return self._process.is_alive()
-        else:
-            return False
+        return self._process.is_alive() if self._process is not None else False
 
     @property
     def state(self) -> int:
@@ -155,11 +152,7 @@ class ProcessManager:
 
     @classmethod
     def running_instances(cls) -> List["ProcessManager"]:
-        l = []
-        for process in cls._processes.values():
-            if process.alive:
-                l.append(process)
-        return l
+        return [process for process in cls._processes.values() if process.alive]
 
     @staticmethod
     def restart_processes(
@@ -187,7 +180,7 @@ class ProcessManager:
 
         try:
             with open("./config/reloadalas", mode="r") as f:
-                for line in f.readlines():
+                for line in f:
                     line = line.strip()
                     _instances.add(ProcessManager.get_manager(line))
         except FileNotFoundError:

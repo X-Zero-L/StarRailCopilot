@@ -87,48 +87,32 @@ class Emulator(EmulatorBase):
         folder, dir1 = os.path.split(folder)
         folder, dir2 = os.path.split(folder)
         if exe == 'Nox.exe':
-            if dir2 == 'Nox':
-                return cls.NoxPlayer
-            elif dir2 == 'Nox64':
-                return cls.NoxPlayer64
-            else:
-                return cls.NoxPlayer
+            return cls.NoxPlayer64 if dir2 == 'Nox64' else cls.NoxPlayer
         if exe == 'Bluestacks.exe':
-            if dir1 in ['BlueStacks', 'BlueStacks_cn']:
+            if dir1 in ['BlueStacks', 'BlueStacks_cn'] or dir1 not in [
+                'BlueStacks_nxt',
+                'BlueStacks_nxt_cn',
+            ]:
                 return cls.BlueStacks4
-            elif dir1 in ['BlueStacks_nxt', 'BlueStacks_nxt_cn']:
-                return cls.BlueStacks5
             else:
-                return cls.BlueStacks4
+                return cls.BlueStacks5
         if exe == 'HD-Player.exe':
             if dir1 in ['BlueStacks', 'BlueStacks_cn']:
                 return cls.BlueStacks4
-            elif dir1 in ['BlueStacks_nxt', 'BlueStacks_nxt_cn']:
-                return cls.BlueStacks5
             else:
                 return cls.BlueStacks5
         if exe == 'dnplayer.exe':
-            if dir1 == 'LDPlayer':
-                return cls.LDPlayer3
-            elif dir1 == 'LDPlayer4':
+            if dir1 == 'LDPlayer4':
                 return cls.LDPlayer4
             elif dir1 == 'LDPlayer9':
                 return cls.LDPlayer9
             else:
                 return cls.LDPlayer3
         if exe == 'NemuPlayer.exe':
-            if dir2 == 'nemu':
-                return cls.MuMuPlayer
-            elif dir2 == 'nemu9':
-                return cls.MuMuPlayerX
-            else:
-                return cls.MuMuPlayer
+            return cls.MuMuPlayerX if dir2 == 'nemu9' else cls.MuMuPlayer
         if exe == 'MuMuPlayer.exe':
             return cls.MuMuPlayer12
-        if exe == 'MEmu.exe':
-            return cls.MEmuPlayer
-
-        return ''
+        return cls.MEmuPlayer if exe == 'MEmu.exe' else ''
 
     @staticmethod
     def multi_to_single(exe):
@@ -169,11 +153,9 @@ class Emulator(EmulatorBase):
         regex = re.compile('<*?hostport="(.*?)".*?guestport="5555"/>')
         try:
             with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f.readlines():
-                    # <Forwarding name="port2" proto="1" hostip="127.0.0.1" hostport="62026" guestport="5555"/>
-                    res = regex.search(line)
-                    if res:
-                        return f'127.0.0.1:{res.group(1)}'
+                for line in f:
+                    if res := regex.search(line):
+                        return f'127.0.0.1:{res[1]}'
             return ''
         except FileNotFoundError:
             return ''
@@ -187,8 +169,7 @@ class Emulator(EmulatorBase):
             # ./BignoxVMS/{name}/{name}.vbox
             for folder in self.list_folder('./BignoxVMS', is_dir=True):
                 for file in iter_folder(folder, ext='.vbox'):
-                    serial = Emulator.vbox_file_to_serial(file)
-                    if serial:
+                    if serial := Emulator.vbox_file_to_serial(file):
                         yield EmulatorInstance(
                             serial=serial,
                             name=os.path.basename(folder),
@@ -228,16 +209,10 @@ class Emulator(EmulatorBase):
             regex = re.compile(r'^Android')
             for folder in self.list_folder('../Engine', is_dir=True):
                 folder = os.path.basename(folder)
-                res = regex.match(folder)
-                if not res:
-                    continue
-                # Serial from BlueStacks4 are not static, they get increased on every emulator launch
-                # Assume all use 127.0.0.1:5555
-                yield EmulatorInstance(
-                    serial=f'127.0.0.1:5555',
-                    name=folder,
-                    path=self.path
-                )
+                if res := regex.match(folder):
+                                # Serial from BlueStacks4 are not static, they get increased on every emulator launch
+                                # Assume all use 127.0.0.1:5555
+                    yield EmulatorInstance(serial='127.0.0.1:5555', name=folder, path=self.path)
         elif self == Emulator.LDPlayerFamily:
             # ./vms/leidian0
             regex = re.compile(r'^leidian(\d+)$')
@@ -248,7 +223,7 @@ class Emulator(EmulatorBase):
                     continue
                 # LDPlayer has no forward port config in .vbox file
                 # Ports are auto increase, 5555, 5557, 5559, etc
-                port = int(res.group(1)) * 2 + 5555
+                port = int(res[1]) * 2 + 5555
                 yield EmulatorInstance(
                     serial=f'127.0.0.1:{port}',
                     name=folder,
@@ -265,8 +240,7 @@ class Emulator(EmulatorBase):
             # vms/nemu-12.0-x64-default
             for folder in self.list_folder('../vms', is_dir=True):
                 for file in iter_folder(folder, ext='.nemu'):
-                    serial = Emulator.vbox_file_to_serial(file)
-                    if serial:
+                    if serial := Emulator.vbox_file_to_serial(file):
                         yield EmulatorInstance(
                             serial=serial,
                             name=os.path.basename(folder),
@@ -276,8 +250,7 @@ class Emulator(EmulatorBase):
             # vms/MuMuPlayer-12.0-0
             for folder in self.list_folder('../vms', is_dir=True):
                 for file in iter_folder(folder, ext='.nemu'):
-                    serial = Emulator.vbox_file_to_serial(file)
-                    if serial:
+                    if serial := Emulator.vbox_file_to_serial(file):
                         yield EmulatorInstance(
                             serial=serial,
                             name=os.path.basename(folder),
@@ -287,8 +260,7 @@ class Emulator(EmulatorBase):
             # ./MemuHyperv VMs/{name}/{name}.memu
             for folder in self.list_folder('./MemuHyperv VMs', is_dir=True):
                 for file in iter_folder(folder, ext='.memu'):
-                    serial = Emulator.vbox_file_to_serial(file)
-                    if serial:
+                    if serial := Emulator.vbox_file_to_serial(file):
                         yield EmulatorInstance(
                             serial=serial,
                             name=os.path.basename(folder),
@@ -339,8 +311,7 @@ class EmulatorManager(EmulatorManagerBase):
                     # Skip those with hash
                     if regex_hash.search(key):
                         continue
-                    for file in Emulator.multi_to_single(key):
-                        yield file
+                    yield from Emulator.multi_to_single(key)
 
     @staticmethod
     def iter_mui_cache():
@@ -358,11 +329,8 @@ class EmulatorManager(EmulatorManagerBase):
 
         regex = re.compile(r'(^.*\.exe)\.')
         for row in rows:
-            res = regex.search(row.name)
-            if not res:
-                continue
-            for file in Emulator.multi_to_single(res.group(1)):
-                yield file
+            if res := regex.search(row.name):
+                yield from Emulator.multi_to_single(res[1])
 
     @staticmethod
     def get_install_dir_from_reg(path, key):
@@ -376,14 +344,12 @@ class EmulatorManager(EmulatorManagerBase):
         """
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path) as reg:
-                root = winreg.QueryValueEx(reg, key)[0]
-                return root
+                return winreg.QueryValueEx(reg, key)[0]
         except FileNotFoundError:
             pass
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path) as reg:
-                root = winreg.QueryValueEx(reg, key)[0]
-                return root
+                return winreg.QueryValueEx(reg, key)[0]
         except FileNotFoundError:
             pass
 
@@ -436,8 +402,7 @@ class EmulatorManager(EmulatorManagerBase):
                         # "E:\ProgramFiles\Microvirt\MEmu\uninstall\uninstall.exe" -u
                         # Extract path in ""
                         res = re.search('"(.*?)"', uninstall)
-                        uninstall = res.group(1) if res else uninstall
-                        yield uninstall
+                        yield res[1] if res else uninstall
 
     @cached_property
     def all_emulators(self) -> t.List[Emulator]:
@@ -459,8 +424,7 @@ class EmulatorManager(EmulatorManagerBase):
         # LDPlayer install path
         for path in [r'SOFTWARE\leidian\ldplayer',
                      r'SOFTWARE\leidian\ldplayer9']:
-            ld = self.get_install_dir_from_reg(path, 'InstallDir')
-            if ld:
+            if ld := self.get_install_dir_from_reg(path, 'InstallDir'):
                 ld = abspath(os.path.join(ld, './dnplayer.exe'))
                 if Emulator.is_emulator(ld) and os.path.exists(ld):
                     exe.add(ld)
@@ -484,8 +448,7 @@ class EmulatorManager(EmulatorManagerBase):
 
         exe = [Emulator(path).path for path in exe if Emulator.is_emulator(path)]
         exe = sorted(set(exe))
-        exe = [Emulator(path) for path in exe]
-        return exe
+        return [Emulator(path) for path in exe]
 
     @cached_property
     def all_emulator_instances(self) -> t.List[EmulatorInstance]:

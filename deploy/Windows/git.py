@@ -57,9 +57,8 @@ class GitManager(DeployConfig):
         if ssl_verify:
             if not self.git_config.check('http', 'sslVerify', value='true'):
                 self.execute(f'"{self.git}" config --local http.sslVerify true', allow_failure=True)
-        else:
-            if not self.git_config.check('http', 'sslVerify', value='false'):
-                self.execute(f'"{self.git}" config --local http.sslVerify false', allow_failure=True)
+        elif not self.git_config.check('http', 'sslVerify', value='false'):
+            self.execute(f'"{self.git}" config --local http.sslVerify false', allow_failure=True)
 
         logger.hr('Set Git Repository', 1)
         if not self.git_config.check(f'remote "{source}"', 'url', value=repo):
@@ -82,9 +81,7 @@ class GitManager(DeployConfig):
         if keep_changes:
             if self.execute(f'"{self.git}" stash', allow_failure=True):
                 self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
-                if self.execute(f'"{self.git}" stash pop', allow_failure=True):
-                    pass
-                else:
+                if not self.execute(f'"{self.git}" stash pop', allow_failure=True):
                     # No local changes to existing files, untracked files not included
                     logger.info('Stash pop failed, there seems to be no local changes, skip instead')
             else:

@@ -101,8 +101,7 @@ def split_and_pair_buttons(buttons, split_func, relative_area):
     """
     group1 = [button for button in buttons if split_func(button)]
     group2 = [button for button in buttons if not split_func(button)]
-    for ret in pair_buttons(group1, group2, relative_area):
-        yield ret
+    yield from pair_buttons(group1, group2, relative_area)
 
 
 def split_and_pair_button_attr(buttons, split_func, relative_area):

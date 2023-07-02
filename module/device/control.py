@@ -35,9 +35,7 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch):
             self.handle_control_check(button)
         x, y = random_rectangle_point(button.button)
         x, y = ensure_int(x, y)
-        logger.info(
-            'Click %s @ %s' % (point2str(x, y), button)
-        )
+        logger.info(f'Click {point2str(x, y)} @ {button}')
         method = self.click_methods.get(
             self.config.Emulator_ControlMethod,
             self.click_adb
@@ -66,18 +64,16 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch):
         x, y = random_rectangle_point(button.button)
         x, y = ensure_int(x, y)
         duration = ensure_time(duration)
-        logger.info(
-            'Click %s @ %s, %s' % (point2str(x, y), button, duration)
-        )
+        logger.info(f'Click {point2str(x, y)} @ {button}, {duration}')
         method = self.config.Emulator_ControlMethod
-        if method == 'minitouch':
+        if method == 'MaaTouch':
+            self.long_click_maatouch(x, y, duration)
+        elif method == 'minitouch':
             self.long_click_minitouch(x, y, duration)
-        elif method == 'uiautomator2':
-            self.long_click_uiautomator2(x, y, duration)
         elif method == 'scrcpy':
             self.long_click_scrcpy(x, y, duration)
-        elif method == 'MaaTouch':
-            self.long_click_maatouch(x, y, duration)
+        elif method == 'uiautomator2':
+            self.long_click_uiautomator2(x, y, duration)
         else:
             self.swipe_adb((x, y), (x, y), duration)
 
@@ -86,18 +82,14 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch):
         p1, p2 = ensure_int(p1, p2)
         duration = ensure_time(duration)
         method = self.config.Emulator_ControlMethod
-        if method == 'minitouch':
-            logger.info('Swipe %s -> %s' % (point2str(*p1), point2str(*p2)))
+        if method in ['minitouch', 'scrcpy', 'MaaTouch']:
+            logger.info(f'Swipe {point2str(*p1)} -> {point2str(*p2)}')
         elif method == 'uiautomator2':
-            logger.info('Swipe %s -> %s, %s' % (point2str(*p1), point2str(*p2), duration))
-        elif method == 'scrcpy':
-            logger.info('Swipe %s -> %s' % (point2str(*p1), point2str(*p2)))
-        elif method == 'MaaTouch':
-            logger.info('Swipe %s -> %s' % (point2str(*p1), point2str(*p2)))
+            logger.info(f'Swipe {point2str(*p1)} -> {point2str(*p2)}, {duration}')
         else:
             # ADB needs to be slow, or swipe doesn't work
             duration *= 2.5
-            logger.info('Swipe %s -> %s, %s' % (point2str(*p1), point2str(*p2), duration))
+            logger.info(f'Swipe {point2str(*p1)} -> {point2str(*p2)}, {duration}')
 
         if distance_check:
             if np.linalg.norm(np.subtract(p1, p2)) < 10:
@@ -106,14 +98,14 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch):
                 logger.info('Swipe distance < 10px, dropped')
                 return
 
-        if method == 'minitouch':
+        if method == 'MaaTouch':
+            self.swipe_maatouch(p1, p2)
+        elif method == 'minitouch':
             self.swipe_minitouch(p1, p2)
-        elif method == 'uiautomator2':
-            self.swipe_uiautomator2(p1, p2, duration=duration)
         elif method == 'scrcpy':
             self.swipe_scrcpy(p1, p2)
-        elif method == 'MaaTouch':
-            self.swipe_maatouch(p1, p2)
+        elif method == 'uiautomator2':
+            self.swipe_uiautomator2(p1, p2, duration=duration)
         else:
             self.swipe_adb(p1, p2, duration=duration)
 
@@ -149,9 +141,7 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch):
              swipe_duration=0.25, shake_duration=0.1, name='DRAG'):
         self.handle_control_check(name)
         p1, p2 = ensure_int(p1, p2)
-        logger.info(
-            'Drag %s -> %s' % (point2str(*p1), point2str(*p2))
-        )
+        logger.info(f'Drag {point2str(*p1)} -> {point2str(*p2)}')
         method = self.config.Emulator_ControlMethod
         if method == 'minitouch':
             self.drag_minitouch(p1, p2, point_random=point_random)

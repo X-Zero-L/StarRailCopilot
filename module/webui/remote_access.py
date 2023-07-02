@@ -216,10 +216,7 @@ class RemoteAccess:
     @staticmethod
     def get_state():
         if RemoteAccess.is_alive():
-            if address is not None:
-                return 1
-            else:
-                return 2
+            return 1 if address is not None else 2
         elif _ssh_notfound:
             return 3
         else:

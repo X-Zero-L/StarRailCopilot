@@ -7,9 +7,8 @@ from module.base.decorator import cached_property, del_cached_property
 def get_assets_from_file(file, regex):
     assets = set()
     with open(file, 'r', encoding='utf-8') as f:
-        for row in f.readlines():
-            result = regex.search(row)
-            if result:
+        for row in f:
+            if result := regex.search(row):
                 assets.add(result.group(1))
     return assets
 

@@ -28,10 +28,7 @@ class Points:
         return self.points[item]
 
     def __len__(self):
-        if self:
-            return len(self.points)
-        else:
-            return 0
+        return len(self.points) if self else 0
 
     def __bool__(self):
         return self._bool
@@ -48,10 +45,7 @@ class Points:
             return Lines(lines, is_horizontal=False)
 
     def mean(self):
-        if not self:
-            return None
-
-        return np.round(np.mean(self.points, axis=0)).astype(int)
+        return None if not self else np.round(np.mean(self.points, axis=0)).astype(int)
 
     def group(self, threshold=3):
         if not self:
@@ -98,10 +92,7 @@ class Lines:
         return Lines(self.lines[item], is_horizontal=self.is_horizontal)
 
     def __len__(self):
-        if self:
-            return len(self.lines)
-        else:
-            return 0
+        return len(self.lines) if self else 0
 
     def __bool__(self):
         return self._bool
@@ -120,11 +111,10 @@ class Lines:
             return None
         if self.is_horizontal:
             return np.mean(self.lines, axis=0)
-        else:
-            x = np.mean(self.mid)
-            theta = np.mean(self.theta)
-            rho = x * np.cos(theta) + self.MID_Y * np.sin(theta)
-            return np.array((rho, theta))
+        x = np.mean(self.mid)
+        theta = np.mean(self.theta)
+        rho = x * np.cos(theta) + self.MID_Y * np.sin(theta)
+        return np.array((rho, theta))
 
     @property
     def mid(self):
@@ -152,10 +142,7 @@ class Lines:
     def move(self, x, y):
         if not self:
             return self
-        if self.is_horizontal:
-            self.lines[:, 0] += y
-        else:
-            self.lines[:, 0] += x * self.cos + y * self.sin
+        self.lines[:, 0] += y if self.is_horizontal else x * self.cos + y * self.sin
         return Lines(self.lines, is_horizontal=self.is_horizontal)
 
     def sort(self):
@@ -209,12 +196,11 @@ class Lines:
             return self
 
         other_mid = other.mid
-        lines = []
-        for mid, line in zip(self.mid, self.lines):
-            if np.any(np.abs(other_mid - mid) < threshold):
-                continue
-            lines.append(line)
-
+        lines = [
+            line
+            for mid, line in zip(self.mid, self.lines)
+            if not np.any(np.abs(other_mid - mid) < threshold)
+        ]
         return Lines(lines, is_horizontal=self.is_horizontal)
 
 
@@ -252,8 +238,11 @@ def corner2inner(corner):
         tuple[int]: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y).
     """
     x0, y0, x1, y1, x2, y2, x3, y3 = np.array(corner).flatten()
-    area = tuple(np.rint((max(x0, x2), max(y0, y1), min(x1, x3), min(y2, y3))).astype(int))
-    return area
+    return tuple(
+        np.rint((max(x0, x2), max(y0, y1), min(x1, x3), min(y2, y3))).astype(
+            int
+        )
+    )
 
 
 def corner2outer(corner):
@@ -267,8 +256,11 @@ def corner2outer(corner):
         tuple[int]: (upper_left_x, upper_left_y, bottom_right_x, bottom_right_y).
     """
     x0, y0, x1, y1, x2, y2, x3, y3 = np.array(corner).flatten()
-    area = tuple(np.rint((min(x0, x2), min(y0, y1), max(x1, x3), max(y2, y3))).astype(int))
-    return area
+    return tuple(
+        np.rint((min(x0, x2), min(y0, y1), max(x1, x3), max(y2, y3))).astype(
+            int
+        )
+    )
 
 
 def trapezoid2area(corner, pad=0):

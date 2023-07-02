@@ -16,7 +16,7 @@ def float2str(n, decimal=3):
     if not isinstance(n, (float, int)):
         return str(n)
     else:
-        return float2str_(n, decimal=decimal) + 's'
+        return f'{float2str_(n, decimal=decimal)}s'
 
 
 class Benchmark(DaemonBase):
@@ -33,7 +33,7 @@ class Benchmark(DaemonBase):
         Returns:
             float: Time cost on average.
         """
-        logger.hr(f'Benchmark test', level=2)
+        logger.hr('Benchmark test', level=2)
         logger.info(f'Testing function: {func.__name__}')
         record = []
 
@@ -146,10 +146,7 @@ class Benchmark(DaemonBase):
 
         def compare(res):
             res = res[1]
-            if not isinstance(res, (int, float)):
-                return 100
-            else:
-                return res
+            return 100 if not isinstance(res, (int, float)) else res
 
         logger.hr('Benchmark Results', level=1)
         fastest_screenshot = 'ADB_nc'

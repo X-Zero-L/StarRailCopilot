@@ -211,9 +211,6 @@ class DungeonUI(UI):
                 logger.info(f'Arrive {enter_check_button.name}')
                 break
 
-            # Additional
-            pass
-
             # Click teleport
             if self.appear(page_guide.check_button, interval=1):
                 if skip_first_load:
@@ -224,10 +221,10 @@ class DungeonUI(UI):
                 if entrance is not None:
                     self.device.click(entrance)
                     self.interval_reset(page_guide.check_button)
-                    continue
                 else:
                     logger.warning(f'Cannot find dungeon entrance of {dungeon}')
-                    continue
+
+                continue
 
     def dungeon_goto(self, dungeon: DungeonList):
         """
@@ -249,7 +246,6 @@ class DungeonUI(UI):
 
         if dungeon.is_Simulated_Universe:
             DUNGEON_NAV_LIST.select_row(KEYWORDS_DUNGEON_NAV.Simulated_Universe, main=self)
-            pass
             self._dungeon_insight(dungeon)
             return True
 

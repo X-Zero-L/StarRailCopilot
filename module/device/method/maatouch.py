@@ -27,24 +27,14 @@ def retry(func):
                     retry_sleep(_)
                     init()
                 return func(self, *args, **kwargs)
-            # Can't handle
-            except RequestHumanTakeover:
+            except (RequestHumanTakeover, ConnectionResetError):
                 break
-            # When adb server was killed
-            except ConnectionResetError as e:
-                logger.error(e)
-
-                def init():
-                    self.adb_reconnect()
-                    del_cached_property(self, 'maatouch_builder')
-            # Emulator closed
             except ConnectionAbortedError as e:
                 logger.error(e)
 
                 def init():
                     self.adb_reconnect()
                     del_cached_property(self, 'maatouch_builder')
-            # AdbError
             except AdbError as e:
                 if handle_adb_error(e):
                     def init():
@@ -52,7 +42,6 @@ def retry(func):
                         del_cached_property(self, 'maatouch_builder')
                 else:
                     break
-            # MaaTouchNotInstalledError: Received "Aborted" from MaaTouch
             except MaaTouchNotInstalledError as e:
                 logger.error(e)
 
@@ -64,7 +53,6 @@ def retry(func):
 
                 def init():
                     del_cached_property(self, 'maatouch_builder')
-            # Unknown, probably a trucked image
             except Exception as e:
                 logger.exception(e)
 
@@ -140,10 +128,9 @@ class MaaTouch(Connection):
                         'Received empty data from MaaTouch, '
                         'probably because MaaTouch is not installed'
                     )
-                else:
-                    # maatouch may not start that fast
-                    self.sleep(1)
-                    continue
+                # maatouch may not start that fast
+                self.sleep(1)
+                continue
 
         # self.max_contacts = max_contacts
         self.max_x = int(max_x)
@@ -160,9 +147,7 @@ class MaaTouch(Connection):
             "MaaTouch stream connected"
         )
         logger.info(
-            "max_contact: {}; max_x: {}; max_y: {}; max_pressure: {}".format(
-                max_contacts, max_x, max_y, max_pressure
-            )
+            f"max_contact: {max_contacts}; max_x: {max_x}; max_y: {max_y}; max_pressure: {max_pressure}"
         )
 
     def maatouch_send(self):

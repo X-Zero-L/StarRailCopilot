@@ -171,12 +171,7 @@ class Connection(ConnectionAttr):
 
         if stream:
             result = self.adb.shell(cmd, stream=stream, timeout=timeout, rstrip=rstrip)
-            if recvall:
-                # bytes
-                return recv_all(result)
-            else:
-                # socket
-                return result
+            return recv_all(result) if recvall else result
         else:
             result = self.adb.shell(cmd, stream=stream, timeout=timeout, rstrip=rstrip)
             result = remove_shell_warning(result)
@@ -206,15 +201,14 @@ class Connection(ConnectionAttr):
             result = self.u2.shell(cmd, stream=stream, timeout=timeout)
             # Already received all, so `recvall` is ignored
             result = remove_shell_warning(result.content)
-            # bytes
-            return result
         else:
             result = self.u2.shell(cmd, stream=stream, timeout=timeout).output
             if rstrip:
                 result = result.rstrip()
             result = remove_shell_warning(result)
-            # str
-            return result
+
+        # bytes
+        return result
 
     @cached_property
     def cpu_abi(self) -> str:
@@ -246,9 +240,7 @@ class Connection(ConnectionAttr):
             return False
         if 'ranchu' in self.adb_shell(['getprop', 'ro.hardware']):
             return True
-        if 'goldfish' in self.adb_shell(['getprop', 'ro.hardware.audio.primary']):
-            return True
-        return False
+        return 'goldfish' in self.adb_shell(['getprop', 'ro.hardware.audio.primary'])
 
     @cached_property
     def _nc_server_host_port(self):
@@ -406,43 +398,39 @@ class Connection(ConnectionAttr):
         port = 0
         for forward in self.adb.forward_list():
             if forward.serial == self.serial and forward.remote == remote and forward.local.startswith('tcp:'):
-                if not port:
-                    logger.info(f'Reuse forward: {forward}')
-                    port = int(forward.local[4:])
-                else:
+                if port:
                     logger.info(f'Remove redundant forward: {forward}')
                     self.adb_forward_remove(forward.local)
 
-        if port:
-            return port
-        else:
+                else:
+                    logger.info(f'Reuse forward: {forward}')
+                    port = int(forward.local[4:])
+        if not port:
             # Create new forward
             port = random_port(self.config.FORWARD_PORT_RANGE)
             forward = ForwardItem(self.serial, f'tcp:{port}', remote)
             logger.info(f'Create forward: {forward}')
             self.adb.forward(forward.local, forward.remote)
-            return port
+        return port
 
     def adb_reverse(self, remote):
         port = 0
         for reverse in self.adb.reverse_list():
             if reverse.remote == remote and reverse.local.startswith('tcp:'):
-                if not port:
-                    logger.info(f'Reuse reverse: {reverse}')
-                    port = int(reverse.local[4:])
-                else:
+                if port:
                     logger.info(f'Remove redundant forward: {reverse}')
                     self.adb_forward_remove(reverse.local)
 
-        if port:
-            return port
-        else:
+                else:
+                    logger.info(f'Reuse reverse: {reverse}')
+                    port = int(reverse.local[4:])
+        if not port:
             # Create new reverse
             port = random_port(self.config.FORWARD_PORT_RANGE)
             reverse = ReverseItem(f'tcp:{port}', remote)
             logger.info(f'Create reverse: {reverse}')
             self.adb.reverse(reverse.local, reverse.remote)
-            return port
+        return port
 
     def adb_forward_remove(self, local):
         """
@@ -504,9 +492,7 @@ class Connection(ConnectionAttr):
                 self.adb_disconnect(serial)
             elif device.status == 'unauthorized':
                 logger.error(f'Device {serial} is unauthorized, please accept ADB debugging on your device')
-            elif device.status == 'device':
-                pass
-            else:
+            elif device.status != 'device':
                 logger.warning(f'Device {serial} is is having a unknown status: {device.status}')
 
         # Skip for emulator-5554
@@ -548,8 +534,7 @@ class Connection(ConnectionAttr):
         return True
 
     def adb_disconnect(self, serial):
-        msg = self.adb_client.disconnect(serial)
-        if msg:
+        if msg := self.adb_client.disconnect(serial):
             logger.info(msg)
 
         del_cached_property(self, 'hermit_session')
@@ -576,13 +561,12 @@ class Connection(ConnectionAttr):
         if self.config.Emulator_AdbRestart and len(self.list_device()) == 0:
             # Restart Adb
             self.adb_restart()
-            # Connect to device
-            self.adb_connect(self.serial)
-            self.detect_device()
         else:
             self.adb_disconnect(self.serial)
-            self.adb_connect(self.serial)
-            self.detect_device()
+
+        # Connect to device
+        self.adb_connect(self.serial)
+        self.detect_device()
 
     @Config.when(DEVICE_OVER_HTTP=True)
     def adb_reconnect(self):
@@ -665,13 +649,9 @@ class Connection(ConnectionAttr):
         )
         output = self.adb_shell(['dumpsys', 'display'])
 
-        res = _DISPLAY_RE.search(output, 0)
-
-        if res:
-            o = int(res.group('orientation'))
-            if o in Connection._orientation_description:
-                pass
-            else:
+        if res := _DISPLAY_RE.search(output, 0):
+            o = int(res['orientation'])
+            if o not in Connection._orientation_description:
                 o = 0
                 logger.warning(f'Invalid device orientation: {o}, assume it is normal')
         else:
@@ -740,7 +720,7 @@ class Connection(ConnectionAttr):
                                 'please set an exact serial in Alas.Emulator.Serial instead of using "auto"')
                 raise RequestHumanTakeover
             elif available.count == 1:
-                logger.info(f'Auto device detection found only one device, using it')
+                logger.info('Auto device detection found only one device, using it')
                 self.serial = devices[0].serial
                 del_cached_property(self, 'adb')
             else:
@@ -807,7 +787,7 @@ class Connection(ConnectionAttr):
             list[str]: List of package names
         """
         packages = self.list_package(show_log=show_log)
-        packages = [p for p in packages if any([k in p.lower() for k in keywords])]
+        packages = [p for p in packages if any(k in p.lower() for k in keywords)]
         return packages
 
     def detect_package(self, keywords=('hkrpg', ), set_config=True):

@@ -69,13 +69,13 @@ class ConnectionAttr:
         if self.is_wsa:
             self.serial = '127.0.0.1:58526'
             if self.config.Emulator_ScreenshotMethod != 'uiautomator2' \
-                    or self.config.Emulator_ControlMethod != 'uiautomator2':
+                        or self.config.Emulator_ControlMethod != 'uiautomator2':
                 with self.config.multi_set():
                     self.config.Emulator_ScreenshotMethod = 'uiautomator2'
                     self.config.Emulator_ControlMethod = 'uiautomator2'
-        if self.is_over_http:
-            if self.config.Emulator_ScreenshotMethod not in ["ADB", "uiautomator2", "aScreenCap"] \
-                    or self.config.Emulator_ControlMethod not in ["ADB", "uiautomator2", "minitouch"]:
+        if self.config.Emulator_ScreenshotMethod not in ["ADB", "uiautomator2", "aScreenCap"] \
+                        or self.config.Emulator_ControlMethod not in ["ADB", "uiautomator2", "minitouch"]:
+            if self.is_over_http:
                 logger.warning(
                     f'When connecting to a device over http: {self.serial} '
                     f'ScreenshotMethod can only use ["ADB", "uiautomator2", "aScreenCap"], '
@@ -196,7 +196,7 @@ class ConnectionAttr:
         if port is None:
             logger.warning(f"Did not match the result: {serial}.")
             raise RequestHumanTakeover
-        port = port.group(2)
+        port = port[2]
         logger.info(f"Match to dynamic port: {port}")
         return f"127.0.0.1:{port}"
 
@@ -218,12 +218,7 @@ class ConnectionAttr:
         import sys
         file = os.path.join(sys.executable, '../Lib/site-packages/adbutils/binaries/adb.exe')
         file = os.path.abspath(file).replace('\\', '/')
-        if os.path.exists(file):
-            return file
-
-        # Use adb in system PATH
-        file = 'adb'
-        return file
+        return file if os.path.exists(file) else 'adb'
 
     @cached_property
     def adb_client(self) -> AdbClient:
@@ -250,12 +245,10 @@ class ConnectionAttr:
         if self.is_over_http:
             # Using uiautomator2_http
             device = u2.connect(self.serial)
+        elif self.serial.startswith('emulator-') or self.serial.startswith('127.0.0.1:'):
+            device = u2.connect_usb(self.serial)
         else:
-            # Normal uiautomator2
-            if self.serial.startswith('emulator-') or self.serial.startswith('127.0.0.1:'):
-                device = u2.connect_usb(self.serial)
-            else:
-                device = u2.connect(self.serial)
+            device = u2.connect(self.serial)
 
         # Stay alive
         device.set_new_command_timeout(604800)

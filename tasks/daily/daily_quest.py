@@ -75,7 +75,10 @@ class DailyQuestUI(DungeonUI):
             logger.warning(f"Recognition failed at {8 - len(results)} quests on one page")
 
         def completed_state(state):
-            return state != KEYWORDS_DAILY_QUEST_STATE.Go and state != KEYWORDS_DAILY_QUEST_STATE.In_Progress
+            return state not in [
+                KEYWORDS_DAILY_QUEST_STATE.Go,
+                KEYWORDS_DAILY_QUEST_STATE.In_Progress,
+            ]
 
         return [quest for quest, _ in
                 split_and_pair_buttons(results, split_func=completed_state, relative_area=(0, 0, 200, 720))]

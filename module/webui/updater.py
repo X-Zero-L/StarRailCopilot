@@ -32,17 +32,13 @@ class Updater(DeployConfig, GitManager, PipManager):
     def schedule_time(self):
         self.read()
         t = self.AutoRestartTime
-        if t is not None:
-            return datetime.time.fromisoformat(t)
-        else:
-            return None
+        return datetime.time.fromisoformat(t) if t is not None else None
 
     def execute_output(self, command) -> str:
         command = command.replace(r"\\", "/").replace("\\", "/").replace('"', '"')
-        log = subprocess.run(
+        return subprocess.run(
             command, capture_output=True, text=True, encoding="utf8", shell=True
         ).stdout
-        return log
 
     def get_commit(self, revision="", n=1, short_sha1=False) -> Tuple:
         """
@@ -61,10 +57,7 @@ class Updater(DeployConfig, GitManager, PipManager):
         logs = log.split("\n")
         logs = list(map(lambda log: tuple(log.split("---")), logs))
 
-        if n == 1:
-            return logs[0]
-        else:
-            return logs
+        return logs[0] if n == 1 else logs
 
     def _check_update(self) -> bool:
         self.state = "checking"
@@ -78,10 +71,9 @@ class Updater(DeployConfig, GitManager, PipManager):
             logger.warning("Git fetch failed")
             return False
 
-        log = self.execute_output(
+        if log := self.execute_output(
             f'"{self.git}" log --not --remotes={source}/* -1 --oneline'
-        )
-        if log:
+        ):
             logger.info(
                 f"Cannot find local commit {log.split()[0]} in upstream, skip update"
             )
@@ -90,11 +82,11 @@ class Updater(DeployConfig, GitManager, PipManager):
         sha1, _, _, message = self.get_commit(f"..{source}/{self.Branch}")
 
         if sha1:
-            logger.info(f"New update available")
+            logger.info("New update available")
             logger.info(f"{sha1[:8]} - {message}")
             return True
         else:
-            logger.info(f"No update")
+            logger.info("No update")
             return False
 
     def _check_update_(self) -> bool:
@@ -105,23 +97,22 @@ class Updater(DeployConfig, GitManager, PipManager):
         r = self.Repository.split("/")
         owner = r[3]
         repo = r[4]
+        token = self.config["ApiToken"]
         if "gitee" in r[2]:
             base = "https://gitee.com/api/v5/repos/"
             headers = {}
-            token = self.config["ApiToken"]
             if token:
                 para = {"access_token": token}
         else:
             base = "https://api.github.com/repos/"
             headers = {"Accept": "application/vnd.github.v3.sha"}
             para = {}
-            token = self.config["ApiToken"]
             if token:
-                headers["Authorization"] = "token " + token
+                headers["Authorization"] = f"token {token}"
 
         try:
             list_commit = requests.get(
-                base + f"{owner}/{repo}/branches/{self.Branch}",
+                f"{base}{owner}/{repo}/branches/{self.Branch}",
                 headers=headers,
                 params=para,
             )
@@ -148,7 +139,7 @@ class Updater(DeployConfig, GitManager, PipManager):
 
         try:
             get_commit = requests.get(
-                base + f"{owner}/{repo}/commits/" + local_sha,
+                f"{base}{owner}/{repo}/commits/{local_sha}",
                 headers=headers,
                 params=para,
             )
@@ -196,10 +187,7 @@ class Updater(DeployConfig, GitManager, PipManager):
     def _start_update(self):
         self.state = "start"
         instances = ProcessManager.running_instances()
-        names = []
-        for alas in instances:
-            names.append(alas.config_name + "\n")
-
+        names = [alas.config_name + "\n" for alas in instances]
         logger.info("Waiting all running alas finish.")
         self._wait_update(instances, names)
 
@@ -291,6 +279,5 @@ class Updater(DeployConfig, GitManager, PipManager):
 updater = Updater()
 
 if __name__ == "__main__":
-    pass
     # if updater.check_update():
     updater.update()

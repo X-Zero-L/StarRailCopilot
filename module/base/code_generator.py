@@ -55,7 +55,7 @@ class CodeGenerator:
 
     def _line_with_tabs(self, line, comment=False, newline=True):
         if comment:
-            line = '# ' + line
+            line = f'# {line}'
         out = '    ' * self.tab_count + line
         if newline:
             out += '\n'
@@ -115,7 +115,7 @@ class CodeGenerator:
 
     def List(self, key=None):
         if key is not None:
-            return TabWrapper(self, prefix=str(key) + ' = [', suffix=']')
+            return TabWrapper(self, prefix=f'{str(key)} = [', suffix=']')
         else:
             return TabWrapper(self, prefix='[', suffix=']', newline=False)
 

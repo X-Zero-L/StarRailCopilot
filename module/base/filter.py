@@ -15,7 +15,7 @@ class Filter:
             regex = re.compile(regex)
         self.regex = regex
         self.attr = attr
-        self.preset = tuple(list(p.lower() for p in preset))
+        self.preset = tuple(p.lower() for p in preset)
         self.filter_raw = []
         self.filter = []
 
@@ -45,21 +45,17 @@ class Filter:
                 if raw not in out:
                     out.append(raw)
             else:
-                for index, obj in enumerate(objs):
+                for obj in objs:
                     if self.apply_filter_to_obj(obj=obj, filter=filter) and obj not in out:
                         out.append(obj)
 
         if func is not None:
             objs, out = out, []
-            for obj in objs:
-                if isinstance(obj, str):
-                    out.append(obj)
-                elif func(obj):
-                    out.append(obj)
-                else:
-                    # Drop this object
-                    pass
-
+            out.extend(
+                obj
+                for obj in objs
+                if isinstance(obj, str) or not isinstance(obj, str) and func(obj)
+            )
         return out
 
     def apply_filter_to_obj(self, obj, filter):
@@ -95,9 +91,8 @@ class Filter:
             return [string]
 
         if result and len(string) and result.span()[1]:
-            return [result.group(index + 1) for index, attr in enumerate(self.attr)]
-        else:
-            logger.warning(f'Invalid filter: "{string}". This selector does not match the regex, nor a preset.')
-            # Invalid filter will be ignored.
-            # Return strange things and make it impossible to match
-            return ['1nVa1d'] + [None] * (len(self.attr) - 1)
+            return [result[index + 1] for index, attr in enumerate(self.attr)]
+        logger.warning(f'Invalid filter: "{string}". This selector does not match the regex, nor a preset.')
+        # Invalid filter will be ignored.
+        # Return strange things and make it impossible to match
+        return ['1nVa1d'] + [None] * (len(self.attr) - 1)

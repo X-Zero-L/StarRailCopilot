@@ -305,14 +305,14 @@ def hr(title, level=3):
 
 
 def attr(name, text):
-    logger.info('[%s] %s' % (str(name), str(text)))
+    logger.info(f'[{str(name)}] {str(text)}')
 
 
 def attr_align(name, text, front='', align=22):
     name = str(name).rjust(align)
     if front:
         name = front + name[len(front):]
-    logger.info('%s: %s' % (name, str(text)))
+    logger.info(f'{name}: {str(text)}')
 
 
 def show():

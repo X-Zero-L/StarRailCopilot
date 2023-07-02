@@ -57,7 +57,7 @@ class AlasManager(DeployConfig):
 
     def alas_kill(self):
         while 1:
-            logger.hr(f'Kill existing Alas', 0)
+            logger.hr('Kill existing Alas', 0)
             proc_list = list(self.iter_process_by_names(['alas.exe', 'python.exe'], in_alas=True))
             if not len(proc_list):
                 break

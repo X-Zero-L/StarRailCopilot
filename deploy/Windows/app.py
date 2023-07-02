@@ -23,7 +23,7 @@ class AppManager(DeployConfig):
         try:
             import alas_webapp
         except ImportError:
-            logger.info(f'Dependency alas_webapp not exists, skip updating')
+            logger.info('Dependency alas_webapp not exists, skip updating')
             return False
 
         update = alas_webapp.app_file()
@@ -46,7 +46,7 @@ class AppManager(DeployConfig):
             return False
 
     def app_update(self):
-        logger.hr(f'Update app', 0)
+        logger.hr('Update app', 0)
 
         if not self.AutoUpdate:
             logger.info('AutoUpdate is disabled, skip')

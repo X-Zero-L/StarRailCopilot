@@ -31,7 +31,7 @@ class cached_class_property(Generic[T]):
 
     def __init__(self, func: Callable[..., T]):
         self.__func__ = func
-        self.__cache_name__ = '_{}_'.format(func.__name__.strip('_'))
+        self.__cache_name__ = f"_{func.__name__.strip('_')}_"
         if self.__cache_name__ == func.__name__:
             raise self.AliasConflict(self.__cache_name__)
 

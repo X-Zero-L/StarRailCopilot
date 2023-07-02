@@ -34,10 +34,7 @@ class Function:
         if not isinstance(other, Function):
             return False
 
-        if self.command == other.command and self.next_run == other.next_run:
-            return True
-        else:
-            return False
+        return self.command == other.command and self.next_run == other.next_run
 
 
 def name_to_function(name):
@@ -104,12 +101,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             self.task = name_to_function("template")
         else:
             self.load()
-            if task is None:
-                # Bind `Alas` by default which includes emulator settings.
-                task = name_to_function("Alas")
-            else:
-                # Bind a specific task for debug purpose.
-                task = name_to_function(task)
+            task = name_to_function("Alas") if task is None else name_to_function(task)
             self.bind(task)
             self.task = task
             self.save()

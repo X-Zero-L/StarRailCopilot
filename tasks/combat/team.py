@@ -32,12 +32,16 @@ class CombatTeam(UI):
             return TEAM_1
 
     def _get_team_selected(self) -> int:
-        for index, button in TEAM_BUTTONS.items():
-            if self.image_color_count(button, color=(255, 234, 191), threshold=221, count=50):
-                return index
-
-        # logger.warning(f'No team selected')
-        return 0
+        return next(
+            (
+                index
+                for index, button in TEAM_BUTTONS.items()
+                if self.image_color_count(
+                    button, color=(255, 234, 191), threshold=221, count=50
+                )
+            ),
+            0,
+        )
 
     def team_set(self, team: int = 1, skip_first_screenshot=True) -> bool:
         """
@@ -59,15 +63,12 @@ class CombatTeam(UI):
             else:
                 self.device.screenshot()
 
-            # End
-            current = self._get_team_selected()
-            if current:
-                if current == team:
-                    logger.info(f'Selected to the correct team')
-                    return False
-                else:
+            if current := self._get_team_selected():
+                if current != team:
                     break
 
+                logger.info('Selected to the correct team')
+                return False
         # Set team
         interval = Timer(2)
         skip_first_screenshot = True
@@ -81,7 +82,7 @@ class CombatTeam(UI):
             current = self._get_team_selected()
             logger.attr('Team', current)
             if current and current == team:
-                logger.info(f'Selected to the correct team')
+                logger.info('Selected to the correct team')
                 return True
 
             # Click

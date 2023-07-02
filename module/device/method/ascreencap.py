@@ -141,14 +141,16 @@ class AScreenCap(Connection):
 
         # See headers in:
         # https://github.com/ClnViewer/Android-fast-screen-capture#streamimage-compressed---header-format-using
-        compressed_data_header = np.frombuffer(raw_compressed_data[0:20], dtype=np.uint32)
+        compressed_data_header = np.frombuffer(
+            raw_compressed_data[:20], dtype=np.uint32
+        )
         if compressed_data_header[0] != 828001602:
             compressed_data_header = compressed_data_header.byteswap()
-            if compressed_data_header[0] != 828001602:
-                text = f'aScreenCap header verification failure, corrupted image received. ' \
+        if compressed_data_header[0] != 828001602:
+            text = f'aScreenCap header verification failure, corrupted image received. ' \
                     f'HEADER IN HEX = {compressed_data_header.tobytes().hex()}'
-                logger.warning(text)
-                raise AscreencapError(text)
+            logger.warning(text)
+            raise AscreencapError(text)
 
         _, uncompressed_size, _, width, height = compressed_data_header
         channel = 3
@@ -189,7 +191,7 @@ class AScreenCap(Connection):
         self.__screenshot_method_fixed = self.__screenshot_method
         if len(screenshot) < 500:
             logger.warning(f'Unexpected screenshot: {screenshot}')
-        raise OSError(f'cannot load screenshot')
+        raise OSError('cannot load screenshot')
 
     @retry
     def screenshot_ascreencap(self):

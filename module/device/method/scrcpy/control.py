@@ -115,8 +115,8 @@ class ControlSender:
             int(y),
             int(self.resolution[0]),
             int(self.resolution[1]),
-            int(h),
-            int(v),
+            h,
+            v,
         )
 
     @inject(const.TYPE_BACK_OR_SCREEN_ON)
@@ -231,33 +231,23 @@ class ControlSender:
         next_x = start_x
         next_y = start_y
 
-        if end_x > self.resolution[0]:
-            end_x = self.resolution[0]
-
-        if end_y > self.resolution[1]:
-            end_y = self.resolution[1]
-
-        decrease_x = True if start_x > end_x else False
-        decrease_y = True if start_y > end_y else False
+        end_x = min(end_x, self.resolution[0])
+        end_y = min(end_y, self.resolution[1])
+        decrease_x = start_x > end_x
+        decrease_y = start_y > end_y
         while True:
             if decrease_x:
                 next_x -= move_step_length
-                if next_x < end_x:
-                    next_x = end_x
+                next_x = max(next_x, end_x)
             else:
                 next_x += move_step_length
-                if next_x > end_x:
-                    next_x = end_x
-
+                next_x = min(next_x, end_x)
             if decrease_y:
                 next_y -= move_step_length
-                if next_y < end_y:
-                    next_y = end_y
+                next_y = max(next_y, end_y)
             else:
                 next_y += move_step_length
-                if next_y > end_y:
-                    next_y = end_y
-
+                next_y = min(next_y, end_y)
             self.touch(next_x, next_y, const.ACTION_MOVE)
 
             if next_x == end_x and next_y == end_y:

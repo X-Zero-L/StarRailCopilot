@@ -92,8 +92,6 @@ class ScrcpyCore(Connection):
             # [server] INFO: Device: ...
             ret += self._scrcpy_receive_from_server_stream()
             logger.info(ret)
-            pass
-
         logger.info('Create video socket')
         timeout = Timer(3).start()
         while 1:
