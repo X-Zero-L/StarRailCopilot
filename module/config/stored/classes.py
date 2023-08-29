@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 from functools import cached_property as functools_cached_property
 
@@ -80,7 +79,8 @@ class StoredBase:
             'time': DEFAULT_TIME
         }
         for attr, value in iter_attribute(self.__class__):
-            attrs[attr] = value
+            if attr.islower():
+                attrs[attr] = value
         return attrs
 
     def __setattr__(self, key, value):
@@ -110,29 +110,6 @@ class StoredBase:
         from module.logger import logger
         logger.attr(self._name, self._stored)
 
-    def dashboard(self) -> str:
-        """
-        Return a string to show on GUI
-        """
-        return 'None'
-
-    def readable_time(self):
-        diff = self.time.timestamp() - time.time()
-        if diff < -1:
-            return '', 'TimeError'
-        elif diff < 60:
-            # < 1 min
-            return '', 'JustNow'
-        elif diff < 3600:
-            return str(int(diff // 60)), 'MinutesAgo'
-        elif diff < 86400:
-            return str(int(diff // 86400)), 'HoursAgo'
-        elif diff < 129600:
-            return str(int(diff // 129600)), 'DaysAgo'
-        else:
-            # > 15 days
-            return '', 'LongTimeAgo'
-
 
 class StoredExpiredAt0400(StoredBase):
     def is_expired(self):
@@ -148,33 +125,56 @@ class StoredInt(StoredBase):
 
 
 class StoredCounter(StoredBase):
-    current = 0
+    value = 0
     total = 0
 
-    def set(self, current, total):
+    FIXED_TOTAL = 0
+
+    def set(self, value, total=0):
+        if self.FIXED_TOTAL:
+            total = self.FIXED_TOTAL
         with self._config.multi_set():
-            self.current = current
+            self.value = value
             self.total = total
 
     def to_counter(self) -> str:
-        return f'{self.current}/{self.total}'
+        return f'{self.value}/{self.total}'
 
     def is_full(self) -> bool:
-        return self.current >= self.total
+        return self.value >= self.total
 
     def get_remain(self) -> int:
-        return self.total - self.current
+        return self.total - self.value
+
+    @cached_property
+    def _attrs(self) -> dict:
+        attrs = super()._attrs
+        if self.FIXED_TOTAL:
+            attrs['total'] = self.FIXED_TOTAL
+        return attrs
+
+    @functools_cached_property
+    def _stored(self):
+        stored = super()._stored
+        if self.FIXED_TOTAL:
+            stored['total'] = self.FIXED_TOTAL
+        return stored
 
 
 class StoredDailyActivity(StoredCounter, StoredExpiredAt0400):
-    def set(self, current):
-        return super().set(current=current, total=500)
+    FIXED_TOTAL = 500
 
-    @property
-    def _stored(self):
-        stored = super()._stored
-        stored['total'] = 500
-        return stored
+
+class StoredTrailblazePower(StoredCounter):
+    FIXED_TOTAL = 180
+
+
+class StoredSimulatedUniverse(StoredCounter, StoredExpiredAt0400):
+    pass
+
+
+class StoredAssignment(StoredCounter):
+    pass
 
 
 class StoredDaily(StoredExpiredAt0400):

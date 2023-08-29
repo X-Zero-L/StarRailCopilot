@@ -216,7 +216,10 @@ class ConfigGenerator:
             if not check_override(p, v):
                 continue
             if isinstance(v, dict):
-                if deep_get(v, keys='type') in ['lock']:
+                typ = v.get('type')
+                if typ == 'state':
+                    pass
+                elif typ == 'lock':
                     deep_default(v, keys='display', value="disabled")
                 elif deep_get(v, keys='value') is not None:
                     deep_default(v, keys='display', value='hide')
@@ -438,6 +441,32 @@ class ConfigGenerator:
 
         return data
 
+    @cached_property
+    def stored(self):
+        import module.config.stored.classes as classes
+        data = {}
+        for path, value in deep_iter(self.args, depth=3):
+            if value.get('type') != 'stored':
+                continue
+            name = path[-1]
+            stored = value.get('stored')
+            stored_class = getattr(classes, stored)
+            row = {
+                'name': name,
+                'path': '.'.join(path),
+                'i18n': f'{path[1]}.{path[2]}.name',
+                'stored': stored,
+                'attrs': stored_class('')._attrs,
+                'order': value.get('order', 0),
+                'color': value.get('color', '#777777')
+            }
+            data[name] = row
+
+        # sort by `order` ascending, but `order`==0 at last
+        data = sorted(data.items(), key=lambda kv: (kv[1]['order'] == 0, kv[1]['order']))
+        data = {k: v for k, v in data}
+        return data
+
     @staticmethod
     def generate_deploy_template():
         template = poor_yaml_read(DEPLOY_TEMPLATE)
@@ -492,12 +521,14 @@ class ConfigGenerator:
     def generate(self):
         _ = self.args
         _ = self.menu
+        _ = self.stored
         # _ = self.event
         self.insert_assignment()
         self.insert_package()
         # self.insert_server()
         write_file(filepath_args(), self.args)
         write_file(filepath_args('menu'), self.menu)
+        write_file(filepath_args('stored'), self.stored)
         self.generate_code()
         self.generate_stored()
         for lang in LANGUAGES:

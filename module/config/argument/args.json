@@ -124,9 +124,14 @@
   "Restart": {
     "Scheduler": {
       "Enable": {
-        "type": "checkbox",
+        "type": "state",
         "value": true,
-        "display": "disabled"
+        "option": [
+          true
+        ],
+        "option_bold": [
+          true
+        ]
       },
       "NextRun": {
         "type": "datetime",
@@ -149,7 +154,11 @@
     "Scheduler": {
       "Enable": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       },
       "NextRun": {
         "type": "datetime",
@@ -272,7 +281,7 @@
       },
       "StagnantShadow": {
         "type": "select",
-        "value": "do_not_archive",
+        "value": "do_not_achieve",
         "option": [
           "do_not_achieve",
           "Stagnant_Shadow_Quanta",
@@ -351,11 +360,27 @@
       }
     },
     "DungeonStorage": {
+      "TrailblazePower": {
+        "type": "stored",
+        "value": {},
+        "display": "hide",
+        "stored": "StoredTrailblazePower",
+        "order": 1,
+        "color": "#eb8efe"
+      },
       "DungeonDouble": {
         "type": "stored",
         "value": {},
         "display": "hide",
         "stored": "StoredDungeonDouble"
+      },
+      "SimulatedUniverse": {
+        "type": "stored",
+        "value": {},
+        "display": "hide",
+        "stored": "StoredSimulatedUniverse",
+        "order": 5,
+        "color": "#8fb5fe"
       }
     }
   },
@@ -363,7 +388,11 @@
     "Scheduler": {
       "Enable": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       },
       "NextRun": {
         "type": "datetime",
@@ -763,7 +792,9 @@
         "type": "stored",
         "value": {},
         "display": "hide",
-        "stored": "StoredDailyActivity"
+        "stored": "StoredDailyActivity",
+        "order": 2,
+        "color": "#ffcf70"
       },
       "DailyQuest": {
         "type": "stored",
@@ -777,7 +808,11 @@
     "Scheduler": {
       "Enable": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       },
       "NextRun": {
         "type": "datetime",
@@ -800,7 +835,11 @@
     "Scheduler": {
       "Enable": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       },
       "NextRun": {
         "type": "datetime",
@@ -819,16 +858,6 @@
       }
     },
     "Assignment": {
-      "Duration": {
-        "type": "select",
-        "value": 20,
-        "option": [
-          4,
-          8,
-          12,
-          20
-        ]
-      },
       "Name_1": {
         "type": "select",
         "value": "Nameless_Land_Nameless_People",
@@ -904,6 +933,24 @@
           "The_Land_of_Gold",
           "The_Blossom_in_the_Storm"
         ]
+      },
+      "Duration": {
+        "type": "select",
+        "value": 20,
+        "option": [
+          4,
+          8,
+          12,
+          20
+        ]
+      },
+      "Assignment": {
+        "type": "stored",
+        "value": {},
+        "display": "hide",
+        "stored": "StoredAssignment",
+        "order": 3,
+        "color": "#deba95"
       }
     }
   }
