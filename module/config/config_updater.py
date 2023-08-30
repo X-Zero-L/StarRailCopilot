@@ -276,7 +276,7 @@ class ConfigGenerator:
         gen.add('from module.config.stored.classes import (')
         with gen.tab():
             for cls in sorted([name for name in dir(classes) if name.startswith('Stored')]):
-                gen.add(cls + ',')
+                gen.add(f'{cls},')
         gen.add(')')
         gen.Empty()
         gen.Empty()
@@ -285,8 +285,7 @@ class ConfigGenerator:
 
         with gen.Class('StoredGenerated'):
             for path, data in deep_iter(self.args, depth=3):
-                cls = data.get('stored')
-                if cls:
+                if cls := data.get('stored'):
                     gen.add(f'{path[-1]} = {cls}("{".".join(path)}")')
 
         gen.write('module/config/stored/stored_generated.py')
@@ -465,8 +464,7 @@ class ConfigGenerator:
 
         # sort by `order` ascending, but `order`==0 at last
         data = sorted(data.items(), key=lambda kv: (kv[1]['order'] == 0, kv[1]['order']))
-        data = {k: v for k, v in data}
-        return data
+        return dict(data)
 
     @staticmethod
     def generate_deploy_template():
@@ -690,11 +688,7 @@ class ConfigUpdater:
             dict:
         """
         old = read_file(filepath_config(config_name))
-        new = self.config_update(old, is_template=is_template)
-        # The updated config did not write into file, although it doesn't matters.
-        # Commented for performance issue
-        # self.write_file(config_name, new)
-        return new
+        return self.config_update(old, is_template=is_template)
 
     @staticmethod
     def write_file(config_name, data, mod_name='alas'):
