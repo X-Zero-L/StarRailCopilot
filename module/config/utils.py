@@ -189,7 +189,7 @@ def alas_instance():
     # out.extend(mod_instance())
 
     if not len(out):
-        out = ['alas']
+        out = ['src']
 
     return out
 
@@ -332,8 +332,9 @@ def data_to_type(data, **kwargs):
     """
     | Condition                            | Type     |
     | ------------------------------------ | -------- |
-    | Value is bool                        | checkbox |
-    | Arg has options                      | select   |
+    | `value` is bool                      | checkbox |
+    | Arg has `options`                    | select   |
+    | Arg has `stored`                     | select   |
     | `Filter` is in name (in data['arg']) | textarea |
     | Rest of the args                     | input    |
 
@@ -345,10 +346,12 @@ def data_to_type(data, **kwargs):
         str:
     """
     kwargs.update(data)
-    if isinstance(kwargs['value'], bool):
+    if isinstance(kwargs.get('value'), bool):
         return 'checkbox'
     elif 'option' in kwargs and kwargs['option']:
         return 'select'
+    elif 'stored' in kwargs and kwargs['stored']:
+        return 'stored'
     elif 'Filter' in kwargs['arg']:
         return 'textarea'
     else:
@@ -392,7 +395,7 @@ def dict_to_kv(dictionary, allow_none=True):
 
 
 def server_timezone() -> timedelta:
-    return SERVER_TO_TIMEZONE.get(server_.server, SERVER_TO_TIMEZONE['cn'])
+    return SERVER_TO_TIMEZONE.get(server_.lang, SERVER_TO_TIMEZONE['cn'])
 
 
 def server_time_offset() -> timedelta:

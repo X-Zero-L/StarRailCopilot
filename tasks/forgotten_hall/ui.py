@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from ppocronnx.predict_system import BoxedResult
+from pponnxcr.predict_system import BoxedResult
 
 from module.base.base import ModuleBase
 from module.base.timer import Timer
@@ -185,7 +185,6 @@ class ForgottenHallUI(DungeonUI):
                 timeout.reset()
 
             if interval.reached() and self._forgotten_hall_enter_appear():
-                self.device.image_save()
                 self.device.click(ENTER_FORGOTTEN_HALL_DUNGEON)
                 interval.reset()
 
@@ -200,4 +199,4 @@ class ForgottenHallUI(DungeonUI):
             if self.match_template_color(DUNGEON_ENTER_CHECKED):
                 logger.info("Forgotten hall dungeon entered")
                 break
-            joystick.handle_map_run()
+            joystick.handle_map_2x_run()

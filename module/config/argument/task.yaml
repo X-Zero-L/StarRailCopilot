@@ -25,10 +25,16 @@ Daily:
     Dungeon:
       - Scheduler
       - Dungeon
+      - DungeonDaily
+      - DungeonSupport
+      - DungeonStorage
     DailyQuest:
       - Scheduler
+      - AchievableQuest
+      - DailyStorage
     BattlePass:
       - Scheduler
+      - BattlePassStorage
     Assignment:
       - Scheduler
       - Assignment

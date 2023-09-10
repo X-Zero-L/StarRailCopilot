@@ -7,12 +7,13 @@ from module.ocr.ocr import Ocr
 from tasks.base.assets.assets_base_page import CLOSE
 from tasks.base.page import Page, page_main
 from tasks.base.popup import PopupHandler
-from tasks.base.state import StateMixin
+from tasks.combat.assets.assets_combat_finish import COMBAT_EXIT
 from tasks.combat.assets.assets_combat_prepare import COMBAT_PREPARE
 
 
-class UI(PopupHandler, StateMixin):
+class UI(PopupHandler):
     ui_current: Page
+    ui_main_confirm_timer = Timer(0.2, count=0)
 
     def ui_page_appear(self, page):
         """
@@ -85,7 +86,7 @@ class UI(PopupHandler, StateMixin):
         logger.warning("Unknown ui page")
         logger.attr("EMULATOR__SCREENSHOT_METHOD", self.config.Emulator_ScreenshotMethod)
         logger.attr("EMULATOR__CONTROL_METHOD", self.config.Emulator_ControlMethod)
-        logger.attr("SERVER", self.config.SERVER)
+        logger.attr("Lang", self.config.LANG)
         logger.warning("Starting from current page is not supported")
         logger.warning(f"Supported page: {[str(page) for page in Page.iter_pages()]}")
         logger.warning('Supported page: Any page with a "HOME" button on the upper-right')
@@ -112,6 +113,8 @@ class UI(PopupHandler, StateMixin):
             # Destination page
             if self.ui_page_appear(destination):
                 logger.info(f'Page arrive: {destination}')
+                if self.ui_page_confirm(destination):
+                    logger.info(f'Page arrive confirm {destination}')
                 break
 
             # Other pages
@@ -121,6 +124,8 @@ class UI(PopupHandler, StateMixin):
                     continue
                 if self.appear(page.check_button, interval=5):
                     logger.info(f'Page switch: {page} -> {page.parent}')
+                    if self.ui_page_confirm(page):
+                        logger.info(f'Page arrive confirm {page}')
                     button = page.links[page.parent]
                     self.device.click(button)
                     self.ui_button_interval_reset(button)
@@ -282,6 +287,47 @@ class UI(PopupHandler, StateMixin):
         if self.appear(COMBAT_PREPARE, interval=5):
             logger.info(f'UI additional: {COMBAT_PREPARE} -> {CLOSE}')
             self.device.click(CLOSE)
+        if self.appear_then_click(COMBAT_EXIT, interval=5):
+            return True
+
+        return False
+
+    def _ui_button_confirm(
+            self,
+            button,
+            confirm=Timer(0.1, count=0),
+            timeout=Timer(2, count=6),
+            skip_first_screenshot=True
+    ):
+        confirm.reset()
+        timeout.reset()
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if timeout.reached():
+                logger.warning(f'_ui_button_confirm({button}) timeout')
+                break
+
+            if self.appear(button):
+                if confirm.reached():
+                    break
+            else:
+                confirm.reset()
+
+    def ui_page_confirm(self, page):
+        """
+        Args:
+            page (Page):
+
+        Returns:
+            bool: If handled
+        """
+        if page == page_main:
+            self._ui_button_confirm(page.check_button)
+            return True
 
         return False
 

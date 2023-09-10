@@ -3,11 +3,15 @@ import datetime
 import operator
 import threading
 
+import pywebio
+
+from module.base.decorator import cached_property, del_cached_property
 from module.base.filter import Filter
-from module.base.utils import SelectedGrids
 from module.config.config_generated import GeneratedConfig
-from module.config.config_manual import ManualConfig
+from module.config.config_manual import ManualConfig, OutputConfig
 from module.config.config_updater import ConfigUpdater
+from module.config.stored.classes import iter_attribute
+from module.config.stored.stored_generated import StoredGenerated
 from module.config.utils import *
 from module.config.watcher import ConfigWatcher
 from module.exception import RequestHumanTakeover, ScriptError
@@ -71,7 +75,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             super().__setattr__(key, value)
 
     def __init__(self, config_name, task=None):
-        logger.attr("Server", self.SERVER)
+        logger.attr("Lang", self.LANG)
         # This will read ./config/<config_name>.json
         self.config_name = config_name
         # Raw json data in yaml file.
@@ -168,6 +172,15 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             self.data, keys="Alas.Optimization.CloseGameDuringWait", default=False
         )
 
+    @cached_property
+    def stored(self) -> StoredGenerated:
+        stored = StoredGenerated()
+        # Bind config
+        for _, value in iter_attribute(stored):
+            value._bind(self)
+            del_cached_property(value, '_stored')
+        return stored
+
     def get_next_task(self):
         """
         Calculate tasks, set pending_task and waiting_task
@@ -241,6 +254,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         )
         # Don't use self.modified = {}, that will create a new object.
         self.modified.clear()
+        del_cached_property(self, 'stored')
         self.write_file(self.config_name, data=self.data)
 
     def update(self):
@@ -471,6 +485,30 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
     def is_task_enabled(self, task):
         return bool(self.cross_get(keys=[task, 'Scheduler', 'Enable'], default=False))
 
+    def update_daily_quests(self):
+        """
+        Raises:
+            TaskEnd: Call task `DailyQuest` and stop current task
+        """
+        if self.stored.DailyActivity.is_expired():
+            logger.info('DailyActivity expired, call task to update')
+            self.task_call('DailyQuest')
+            self.task_stop()
+        if self.stored.DailyQuest.is_expired():
+            logger.info('DailyQuest expired, call task to update')
+            self.task_call('DailyQuest')
+            self.task_stop()
+
+    def update_battle_pass_quests(self):
+        """
+        Raises:
+            TaskEnd: Call task `BattlePass` and stop current task
+        """
+        if self.stored.BattlePassTodayQuest.is_expired():
+            logger.info('BattlePassTodayQuest expired, call task to update')
+            self.task_call('BattlePass')
+            self.task_stop()
+
     @property
     def DEVICE_SCREENSHOT_METHOD(self):
         return self.Emulator_ScreenshotMethod
@@ -497,6 +535,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         backup = ConfigBackup(config=self)
         backup.cover(**kwargs)
         return backup
+
+
+pywebio.output.Output = OutputConfig
+pywebio.pin.Output = OutputConfig
 
 
 class ConfigBackup:
