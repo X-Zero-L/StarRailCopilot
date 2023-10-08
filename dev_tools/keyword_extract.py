@@ -232,6 +232,85 @@ class KeywordExtract:
         )
         self.load_keywords(keywords_id, lang)
 
+    # 生成每个副本爆出的材料分别是给哪些角色用的
+    def generate_dungeon_materials(self):
+        
+        def get_materials_to_avatars() -> dict[int, set[int]]:
+            filename = 'AvatarPromotionConfig.json'
+            path = os.path.join(TextMap.DATA_FOLDER, 'ExcelOutput', filename)
+            data = read_file(path)
+            promotion_item_avatar = {}
+            for avatar_id, promotion_data in data.items():
+                for promotion, promotion_cost_list in promotion_data.items():
+                    for cost in promotion_cost_list['PromotionCostList']:
+                        item_id = cost['ItemID']
+                        promotion_item_avatar.setdefault(item_id, set()).add(avatar_id)
+            return promotion_item_avatar
+
+        promotion_item_avatar = get_materials_to_avatars()
+        def get_item_dungeon(promotion_item_avatar: dict[int, set[int]]) -> dict[int, int]:
+            filename = 'ItemComefrom.json'
+            path = os.path.join(TextMap.DATA_FOLDER, 'ExcelOutput', filename)
+            data = read_file(path)
+            item_dungeon = {}
+            for item_id, item_data in data.items():
+                if int(item_id) in list(promotion_item_avatar.keys()):
+                    for item_level, item_level_data in item_data.items():
+                        dungeon_name_hash = item_level_data["Desc"]["Hash"]
+                        dungeon_name = self.find_keyword(dungeon_name_hash, lang='cn')[1]
+                        if "凝滞虚影" not in dungeon_name:
+                            continue
+                        goto_id = item_level_data["GotoID"] # to find really dungeon name, now is location name
+                        
+                        def get_dungeon_name_hash_from_goto_id(goto_id) -> int:
+                            goto_id = str(goto_id)
+                            def get_map_info_id_from_goto_id(goto_id) -> int:
+                                filename = "GotoConfig.json"
+                                path = os.path.join(TextMap.DATA_FOLDER, 'ExcelOutput', filename)
+                                data = read_file(path)
+                                return min(data[goto_id]["ParamIntList"])
+
+                            map_info_id = get_map_info_id_from_goto_id(goto_id)
+                            
+                            filename = "MappingInfo.json"
+                            path = os.path.join(TextMap.DATA_FOLDER, 'ExcelOutput', filename)
+                            data = read_file(path)
+                            return data[str(map_info_id)]["0"]["Name"]["Hash"]
+                        
+                        dungeon_name_hash = get_dungeon_name_hash_from_goto_id(goto_id)
+                        item_dungeon[int(item_id)] = dungeon_name_hash
+                        break
+            return item_dungeon
+
+        item_dungeon = get_item_dungeon(promotion_item_avatar)
+
+        def get_avatar_id_to_hash() -> dict[str, int]:
+            filename = 'ItemConfigAvatarPlayerIcon.json'
+            path = os.path.join(TextMap.DATA_FOLDER, 'ExcelOutput', filename)
+            data = read_file(path)
+            avatar_id_to_avatar_hash = {}
+            for avatar_id, avatar_data in data.items():
+                avatar_hash = avatar_data["ItemName"]["Hash"]
+                avatar_id_to_avatar_hash[avatar_id] = avatar_hash
+            return avatar_id_to_avatar_hash
+
+        avatar_id_to_hash = get_avatar_id_to_hash()
+
+        def get_dungeon_avatar(item_dungeon: dict[int, int], promotion_item_avatar: dict[int, set[int]], avatar_id_to_hash: dict[str, int]) -> dict[str, list[str]]:
+            dungeon_avatar = {}
+            for item_id, dungeon_name_hash in item_dungeon.items():
+                dungeon_name = self.find_keyword(dungeon_name_hash, lang='cn')[1]
+                dungeon_avatar.setdefault(dungeon_name, [])
+                print(f"{dungeon_name}: ", end='')
+                if int(item_id) in promotion_item_avatar:
+                    for avatar_id in promotion_item_avatar[int(item_id)]:
+                        avatar_id = f"20{avatar_id}"
+                        avatar_name = self.find_keyword(avatar_id_to_hash[avatar_id], lang='cn')[1]
+                        dungeon_avatar[dungeon_name].append(avatar_name)
+                    print(f"    {dungeon_avatar[dungeon_name]}")
+
+        dungeon_avatar = get_dungeon_avatar(item_dungeon, promotion_item_avatar, avatar_id_to_hash)
+
     def generate_forgotten_hall_stages(self):
         keyword_class = "ForgottenHallStage"
         output_file = './tasks/forgotten_hall/keywords/stage.py'
@@ -381,6 +460,7 @@ class KeywordExtract:
         self.generate_forgotten_hall_stages()
         self.generate_map_planes()
         self.generate_character_keywords()
+        self.generate_dungeon_materials()
         self.generate_daily_quests()
         self.generate_battle_pass_quests()
         self.load_keywords(['养成材料', '光锥', '遗器', '其他材料', '消耗品', '任务', '贵重物'])
